@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+
+<xs:schema version="1.0"
+           xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           elementFormDefault="qualified" targetNamespace="http://sofof.org/xsd" xmlns="http://sofof.org/xsd">
+    <xs:element name="sofof">
+        <xs:complexType>
+            <xs:all>
+                <xs:element name="server" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:attribute name="port" type="xs:positiveInteger" use="required"/>
+                        <xs:attribute name="ssl" type="TrueFalse"/>
+                        <xs:all>
+                            <xs:element name="users" maxOccurs="1">
+                                <xs:complexType>
+                                    <xs:all>
+                                        <xs:element name="user">
+                                            <xs:simpleType>
+                                                <xs:attribute name="name" type="xs:string" use="required"/>
+                                                <xs:attribute name="password" type="xs:string" use="required"/>
+                                            </xs:simpleType>
+                                        </xs:element>
+                                    </xs:all>
+                                </xs:complexType>
+                            </xs:element>
+                            <xs:element name="database" maxOccurs="1" minOccurs="1">
+                                <xs:complexType>
+                                    <xs:attribute name="name" type="xs:string" use="required"/>
+                                    <xs:attribute name="path" type="xs:string"/>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="sessions" maxOccurs="1">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element name="session">
+                                <xs:complexType>
+                                    <xs:attribute name="name" use="required"/>
+                                    <xs:attribute name="host"/>
+                                    <xs:attribute name="port" use="required"/>
+                                    <xs:attribute name="ssl" type="TrueFalse"/>
+                                    <xs:all>
+                                        <xs:element name="user">
+                                            <xs:complexType>
+                                                <xs:attribute name="name" type="xs:string" use="required"/>
+                                                <xs:attribute name="password" type="xs:string" use="required"/>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:all>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:complexType name="TrueFalse">
+                    <xs:simpleContent>
+                        <xs:restriction>
+                            <xs:enumeration value="true"/>
+                            <xs:enumeration value="false"/>
+                        </xs:restriction>
+                    </xs:simpleContent>
+                </xs:complexType>
+            </xs:all>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>
