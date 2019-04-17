@@ -20,4 +20,4 @@ public class Binding {
 ```
 
 ## نقطة البداية
-لتستطيع البدء باستخدام قاعدة بيانات صفوف يمكنك تنزيل آخر إصدار لقاعدة البيانات من  [هنا](https://github.com/RamiManaf/Sofof/releases/) وقراءة [الدليل](https://github.com/RamiManaf/Sofof/wiki/Getting Started)
+لتستطيع البدء باستخدام قاعدة بيانات صفوف يمكنك تنزيل آخر إصدار لقاعدة البيانات من  [هنا](https://github.com/RamiManaf/Sofof/releases/) وقراءة [الدليل](https://github.com/RamiManaf/Sofof/wiki/Getting_Started)
