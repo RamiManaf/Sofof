@@ -1,5 +1,5 @@
-# Sofof Database
-Sofof is a simple, easy, portable and multiuser database for java programmers (SE and EE).
+# قاعدة بيانات صفوف
+صفوف هي قاعدة بيانات سهلة, متنقلة ومتعددة المستخدمين لمبرمجي جافا SE و EE
 ## Example
 ```java
 import org.sofof.command.Bind;
@@ -18,3 +18,6 @@ public class Binding {
     }
 }
 ```
+
+## نقطة البداية
+لتستطيع البدء باستخدام قاعدة بيانات صفوف يمكنك تنزيل آخر إصدار لقاعدة البيانات من  [هنا](https://github.com/RamiManaf/Sofof/releases/) وقراءة [الدليل](https://github.com/RamiManaf/Sofof/wiki/Getting Started)
