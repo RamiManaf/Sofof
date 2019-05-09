@@ -18,7 +18,7 @@ import java.io.Serializable;
  * Session sess = new Database("localhost", 6969).startSession(new User("رامي", "كلمة سر"), false);
  * </pre></blockquote>
  * @author Rami Manaf Abdullah
- * @see com.sefr.sofof.Server
+ * @see org.sofof.Server
  * @see SofofSecurityManager
  */
 public class User implements Serializable{

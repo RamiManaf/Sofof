@@ -2,10 +2,10 @@
 <taglib version="2.1" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd">
     <tlib-version>1.0</tlib-version>
     <short-name>sofof</short-name>
-    <uri>http://arabsefr.com/sofof</uri>
+    <uri>http://sofof.org</uri>
     <tag>
         <name>session</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.SessionTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.SessionTag</tag-class>
         <attribute>
             <name>host</name>
             <rtexprvalue>true</rtexprvalue>
@@ -34,7 +34,7 @@
     </tag>
     <tag>
         <name>bind</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.BindTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.BindTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
             <name>object</name>
@@ -57,7 +57,7 @@
     </tag>
     <tag>
         <name>unbind</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.UnBindTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.UnBindTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
             <name>clazz</name>
@@ -77,12 +77,12 @@
         <attribute>
             <name>where</name>
             <rtexprvalue>true</rtexprvalue>
-            <type>com.sefr.sofof.command.condition.Condition</type>
+            <type>org.sofof.command.condition.Condition</type>
         </attribute>
     </tag>
     <tag>
         <name>update</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.UpdateTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.UpdateTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
             <name>object</name>
@@ -108,12 +108,12 @@
         <attribute>
             <name>where</name>
             <rtexprvalue>true</rtexprvalue>
-            <type>com.sefr.sofof.command.condition.Condition</type>
+            <type>org.sofof.command.condition.Condition</type>
         </attribute>
     </tag>
     <tag>
         <name>select</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.SelectTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.SelectTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
             <name>clazz</name>
@@ -134,12 +134,12 @@
         <attribute>
             <name>where</name>
             <rtexprvalue>true</rtexprvalue>
-            <type>com.sefr.sofof.command.condition.Condition</type>
+            <type>org.sofof.command.condition.Condition</type>
         </attribute>
         <attribute>
             <name>sort</name>
             <rtexprvalue>true</rtexprvalue>
-            <type>com.sefr.sofof.command.sorter.Sorter</type>
+            <type>org.sofof.command.sorter.Sorter</type>
         </attribute>
         <attribute>
             <name>var</name>
@@ -150,7 +150,7 @@
     </tag>
     <tag>
         <name>capture</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.CaptureTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.CaptureTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
             <name>object</name>
@@ -161,7 +161,7 @@
     </tag>
     <tag>
         <name>loadCapture</name>
-        <tag-class>com.sefr.sofof.servlet.jsp.LoadCaptureTag</tag-class>
+        <tag-class>org.sofof.servlet.jsp.LoadCaptureTag</tag-class>
         <body-content>empty</body-content>
         <attribute>
             <name>clazz</name>

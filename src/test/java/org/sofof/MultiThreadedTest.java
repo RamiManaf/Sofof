@@ -33,7 +33,7 @@ public class MultiThreadedTest {
     private static final int BIND_COUNT = 100;
 
     @BeforeClass
-    public static void setUpClass() throws SofofException {
+    public static void setUpClass() throws SofofException, InterruptedException {
         latch = new CountDownLatch(BIND_COUNT);
         server = new Server();
         server.configure();

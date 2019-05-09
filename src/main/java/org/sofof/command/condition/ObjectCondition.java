@@ -17,7 +17,7 @@ import java.io.Serializable;
  * المطلوب
  * </p>
  * <p>
- * {@link com.sefr.sofof.command.ExpressionExecuter النص التنفيذي}
+ * {@link org.sofof.command.ExpressionExecuter النص التنفيذي}
  * 
  * يتم تطبيق النص التنفيذي وتحويله إما إلى كائن أو إلى قيمة عددية أو منطقية
  * وتتوفر لك مجموعة من عمليات المقارنة بحيث تستطيع مقارنة نواتج النصين التنفيذيين

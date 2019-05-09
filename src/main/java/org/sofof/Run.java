@@ -137,14 +137,14 @@ class Run {
     private ScriptEngine getEngine() throws Exception {
         ScriptEngine engine = new ScriptEngineManager().getEngineByName("JavaScript");
         engine.eval("load('nashorn:mozilla_compat.js');");
-        engine.eval("importPackage('com.sefr.sofof');");
-        engine.eval("importPackage('com.sefr.sofof.annotation');");
-        engine.eval("importPackage('com.sefr.sofof.command');");
-        engine.eval("importPackage('com.sefr.sofof.command.condition');");
-        engine.eval("importPackage('com.sefr.sofof.command.sorter');");
-        engine.eval("importPackage('com.sefr.sofof.command.permission');");
-        engine.eval("importPackage('com.sefr.sofof.command.servlet');");
-        engine.eval("importPackage('com.sefr.sofof.command.servlet.jsp');");
+        engine.eval("importPackage('org.sofof');");
+        engine.eval("importPackage('org.sofof.annotation');");
+        engine.eval("importPackage('org.sofof.command');");
+        engine.eval("importPackage('org.sofof.command.condition');");
+        engine.eval("importPackage('org.sofof.command.sorter');");
+        engine.eval("importPackage('org.sofof.command.permission');");
+        engine.eval("importPackage('org.sofof.command.servlet');");
+        engine.eval("importPackage('org.sofof.command.servlet.jsp');");
         return engine;
     }
 
@@ -159,6 +159,7 @@ class Run {
                 + "startSession  starts a session\n"
                 + "exit          close this program\n"
                 + "-h        show this content or command pattern\n"
+                + "common variable names are session, server\n"
                 + "if one parameter have one or more white space surround it with double quotes\n");
     }
 }

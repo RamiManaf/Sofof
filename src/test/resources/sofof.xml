@@ -8,8 +8,7 @@ and open the template in the editor.
 
 <sofof
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
-    xmlns='http://arabsefr.com/sofof/xsd'
-    xsi:schemaLocation='http://arabsefr.com/sofof/xsd http://arabsefr.com/xsd/sofof.xsd'>
+    xmlns='http://sofof.org/xsd'>
     <server port="6969">
         <database name="test-db"/>
         <users>

@@ -21,6 +21,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocketFactory;
 
 /**
@@ -41,7 +43,6 @@ import javax.net.ssl.SSLServerSocketFactory;
  * <ul>
  * <li>يجب أن يكون اسم الملف sofof.xml</li>
  * <li>يجب وضعه في المسار الأصلي وليس تحت أي حزمة</li>
- * <li>يجب أن يستخدم الجذر Namespace arabsefr.com/sofof/xsd</li>
  * </ul>
  *
  * @author Rami Manaf Abdullah
@@ -49,6 +50,9 @@ import javax.net.ssl.SSLServerSocketFactory;
  */
 public class Server extends Thread {
 
+    private final static Logger LOGGER = Logger.getLogger(Server.class.getName());
+
+    private boolean internal = false;
     private File db;
     private int port;
     private boolean ssl;
@@ -61,6 +65,7 @@ public class Server extends Thread {
      * تنشئ كائن الخادم
      */
     public Server() {
+        this.port = -1;
         users = new ArrayList<>();
     }
 
@@ -132,26 +137,34 @@ public class Server extends Thread {
      */
     public Server startUp() throws SofofException {
         try {
-            readFromFile();
+            readMetaData();
+            if (db == null) {
+                throw new SofofException("you havn't choose the db folder");
+            }
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
                     try {
                         shutdown();
                     } catch (SofofException ex) {
-                        System.err.println(ex);
-                        ex.printStackTrace();
+                        LOGGER.log(Level.FINE, null, ex);
                     }
                 }
             });
             this.setDaemon(true);
-            if (ssl) {
-                socket = SSLServerSocketFactory.getDefault().createServerSocket(port);
-            } else {
-                socket = new ServerSocket(port);
-            }
             this.setName("Sofof Server");
-            this.start();
+            cleanUp();
+            if (port == -1) {
+                internal = true;
+            } else {
+                internal = false;
+                if (ssl) {
+                    socket = SSLServerSocketFactory.getDefault().createServerSocket(port);
+                } else {
+                    socket = new ServerSocket(port);
+                }
+                this.start();
+            }
             return this;
         } catch (IOException ex) {
             throw new SofofException("can not open the server socket", ex);
@@ -166,8 +179,7 @@ public class Server extends Thread {
                 new Service(client).start();
             } catch (IOException ex) {
                 if (!socket.isClosed()) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
+                    LOGGER.log(Level.SEVERE, null, ex);
                 }
             }
         }
@@ -175,20 +187,20 @@ public class Server extends Thread {
 
     public class Service extends Thread {
 
-        private Socket socket;
+        private Socket client;
         private User user;
-        private ListInputStream in;
-        private ListOutputStream out;
+        private DefaultListInputStream in;
+        private DefaultListOutputStream out;
 
         public Service(Socket s) {
-            socket = s;
+            client = s;
             this.setName("Sofof Service");
         }
 
         @Override
         public void run() {
-            try (ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-                    ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());) {
+            try (ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
+                    ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());) {
                 user = (User) ois.readObject();
                 if (users.contains(user)) {
                     user = users.get(users.indexOf(user));
@@ -197,8 +209,8 @@ public class Server extends Thread {
                     oos.writeBoolean(false);
                     return;
                 }
-                in = new ListInputStream(db, bindTree, classLoader);
-                out = new ListOutputStream(db, bindTree);
+                in = new DefaultListInputStream(db, bindTree, classLoader);
+                out = new DefaultListOutputStream(db, bindTree);
                 oos.flush();
                 while (true) {
                     Object type = ois.readObject();
@@ -228,25 +240,24 @@ public class Server extends Thread {
             } catch (EOFException ex) {
             } catch (ClassNotFoundException ex) {
                 try {
-                    throw new SofofException("the recived class not found in the classpath", ex);
+                    throw new SofofException("the recived class is not found in the classpath", ex);
                 } catch (SofofException ex1) {
-                    System.err.println(ex1.getMessage());
-                    ex1.printStackTrace();
+                    LOGGER.log(Level.SEVERE, null, ex);
                 }
-            } catch (IOException ex) {
-                if (!socket.isClosed()) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
-                }
-            } catch (SofofException ex) {
-                System.err.println(ex.getMessage());
-                ex.printStackTrace();
+            } catch (IOException | SofofException ex) {
+                LOGGER.log(Level.SEVERE, null, ex);
             } finally {
                 try {
-                    if (!socket.isClosed()) {
-                        socket.close();
+                    commite();
+                } catch (SofofException ex) {
+                    LOGGER.log(Level.SEVERE, null, ex);
+                }
+                try {
+                    if (!client.isClosed()) {
+                        client.close();
                     }
                 } catch (IOException ex) {
+                    LOGGER.log(Level.FINE, null, ex);
                 }
             }
         }
@@ -258,18 +269,20 @@ public class Server extends Thread {
             return;
         }
         try {
-            org.jdom2.Namespace namespace = org.jdom2.Namespace.getNamespace("http://arabsefr.com/sofof/xsd");
             org.jdom2.Element root = new org.jdom2.input.SAXBuilder().build(getClass().getResource("/sofof.xml")).getRootElement();
+            org.jdom2.Namespace namespace = org.jdom2.Namespace.getNamespace("http://sofof.org/xsd");
             org.jdom2.Element server = root.getChild("server", namespace);
-            this.ssl = Boolean.valueOf(server.getAttributeValue("ssl", "false"));
             this.db = new File(server.getChild("database", namespace).getAttributeValue("path"), server.getChild("database", namespace).getAttributeValue("name"));
             Database.createDatabase(this.db);
-            port = Integer.parseInt(server.getAttributeValue("port"));
-            if (server.getChild("users", namespace) != null) {
-                org.jdom2.Element usersEl = server.getChild("users", namespace);
-                for (org.jdom2.Element userEl : usersEl.getChildren("user", namespace)) {
-                    User u = new User(userEl.getAttributeValue("name"), userEl.getAttributeValue("password"));
-                    users.add(u);
+            port = server.getAttributeValue("port") == null ? -1 : Integer.parseInt(server.getAttributeValue("port"));
+            if (port != -1) {
+                this.ssl = Boolean.valueOf(server.getAttributeValue("ssl", "false"));
+                if (server.getChild("users", namespace) != null) {
+                    org.jdom2.Element usersEl = server.getChild("users", namespace);
+                    for (org.jdom2.Element userEl : usersEl.getChildren("user", namespace)) {
+                        User u = new User(userEl.getAttributeValue("name"), userEl.getAttributeValue("password"));
+                        users.add(u);
+                    }
                 }
             }
         } catch (IOException ex) {
@@ -279,35 +292,33 @@ public class Server extends Thread {
         }
     }
 
-    private void readFromFile() throws SofofException {
-        try {
-            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(db, "binds"))) {
-                @Override
-                protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-                    if (classLoader != null) {
-                        try {
-                            return Class.forName(desc.getName(), false, classLoader);
-                        } catch (ClassNotFoundException ex) {
-                            return super.resolveClass(desc);
-                        }
-                    } else {
-                        return super.resolveClass(desc); //To change body of generated methods, choose Tools | Templates.
+    private void readMetaData() throws SofofException {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(db, "binds"))) {
+            @Override
+            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+                if (classLoader != null) {
+                    try {
+                        return Class.forName(desc.getName(), false, classLoader);
+                    } catch (ClassNotFoundException ex) {
+                        return super.resolveClass(desc);
                     }
+                } else {
+                    return super.resolveClass(desc); //To change body of generated methods, choose Tools | Templates.
                 }
-            };
+            }
+        }) {
             bindTree = (BindTree) ois.readObject();
         } catch (IOException ex) {
             throw new SofofException("can not read meta data", ex);
         } catch (ClassNotFoundException ex) {
-            System.err.println(ex.getMessage());
-            ex.printStackTrace();
+            LOGGER.log(Level.SEVERE, null, ex);
         }
     }
 
     public List<User> getUsers() {
         return users;
     }
-    
+
     public void setUsers(List<User> users) {
         this.users = users;
     }
@@ -351,19 +362,37 @@ public class Server extends Thread {
         }
     }
 
-    public int execute(User user, Executable exe) throws SofofException {
-        checkExecutingPermission(user, exe);
+    /**
+     * تستخدم في حالة كان الخادم داخليا فقط
+     *
+     * @param exe الأمر
+     * @return ناتج تنفيذ الأمر, غالبا عدد الكائنات المتأثرة بالأمر
+     * @throws SofofException
+     */
+    public int execute(Executable exe) throws SofofException {
+        if (!internal) {
+            throw new SofofException("unauthenticated execute for an  external server has been blocked");
+        }
         int result;
         synchronized (bindTree) {
-            result = exe.execute(new ListInputStream(db, bindTree, classLoader), new ListOutputStream(db, bindTree));
+            result = exe.execute(new DefaultListInputStream(db, bindTree, classLoader), new DefaultListOutputStream(db, bindTree));
         }
         commite();
         return result;
     }
 
-    public List query(User user, Query query) throws SofofException {
-        checkQueryingPermission(user, query);
-        return query.query(new ListInputStream(db, bindTree, classLoader));
+    /**
+     * تستخدم في حالة كان الخادم داخليا فقط
+     *
+     * @param query الاستعلام
+     * @return قائمة بالكائنات المستعلم عنها
+     * @throws SofofException
+     */
+    public List query(Query query) throws SofofException {
+        if (!internal) {
+            throw new SofofException("unauthenticated query for an  external server has been blocked");
+        }
+        return query.query(new DefaultListInputStream(db, bindTree, classLoader));
     }
 
     /**
@@ -376,13 +405,29 @@ public class Server extends Thread {
      * @throws org.sofof.SofofException
      */
     public void shutdown() throws SofofException {
-        try {
-            if (!socket.isClosed()) {
-                socket.close();
+        if (!internal) {
+            try {
+                if (!socket.isClosed()) {
+                    socket.close();
+                }
+            } catch (IOException ex) {
             }
-        } catch (IOException ex) {
+            interrupt();
         }
-        interrupt();
+    }
+
+    private void cleanUp() {
+        for (BindTree.Bind bind : bindTree.getBinds()) {
+            for (BindTree.BindClass bindClass : bind.getClasses()) {
+                if (bindClass.getStorageFile() != null) {
+                    File temp = new File(bindClass.getStorageFile().getParentFile(), "temp-" + bindClass.getStorageFile().getName());
+                    if (temp.exists()) {
+                        bindClass.getStorageFile().delete();
+                        temp.renameTo(bindClass.getStorageFile());
+                    }
+                }
+            }
+        }
     }
 
 }

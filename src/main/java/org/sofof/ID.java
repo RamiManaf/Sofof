@@ -12,7 +12,7 @@ import java.util.Objects;
  *المعرف هو صف يتم استخدامه للإشارة للكائنات داخل قاعدة البيانات, إذ يتم وضعه كمعامل في أي صف وسيتم توليده عند كتابة الكائن في قاعدة البيانات, ولاسترجاعه يجب قراءة الكائن الموجود في قاعدة البيانات.
  * استخدم المعرف كعلامة مميزة فقط بين الكائنات الأخرى التي تمتلك معرفا تم توليده.
  * @author Rami Manaf Abdullah
- * @see com.sefr.sofof.command.Bind
+ * @see org.sofof.command.Bind
  */
 public class ID implements Serializable{
     

@@ -5,10 +5,10 @@
  */
 package org.sofof.command;
 
-import org.sofof.ListInputStream;
 import org.sofof.SofofException;
 import java.io.Serializable;
 import java.util.List;
+import org.sofof.ListInputStream;
 
 /**
  * استعلام يقوم بالاستعلام عن كائنات محددة

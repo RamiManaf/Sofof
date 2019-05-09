@@ -5,6 +5,8 @@
  */
 package org.sofof.servlet.jsp;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.sofof.Database;
 import org.sofof.Session;
 import org.sofof.SofofException;
@@ -73,6 +75,16 @@ public class SessionTag extends TagSupport {
             throw new JspTagException("no session tag parent found");
         }
         return ((SessionTag)tag).getSession();
+    }
+
+    @Override
+    public int doEndTag() throws JspException {
+        if(name == null)try {
+            session.close();
+        } catch (SofofException ex) {
+            throw new JspException(ex);
+        }
+        return EVAL_PAGE;
     }
 
 }

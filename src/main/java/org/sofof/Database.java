@@ -27,71 +27,84 @@ public class Database {
     private String host;
     private int port;
     private static HashMap<String, Session> sessions = new HashMap<>();
-    
+
     /**
-     *<p>تنشئ كائن قاعدة بيانات من عنوان قاعدة البيانات ورقم المنفذ.
-     * يمكن لعنوان قاعدة البيانات أن يكون رابطا أو عنوان إنترنت, مثلا:</p>
+     * <p>
+     * تنشئ كائن قاعدة بيانات من عنوان قاعدة البيانات ورقم المنفذ. يمكن لعنوان
+     * قاعدة البيانات أن يكون رابطا أو عنوان إنترنت, مثلا:</p>
      * <ul>
-     * <li>arabsefr.com</li>
+     * <li>google.com</li>
      * <li>179.0.23.8</li>
      * </ul>
-     * في حالة كون قاعدة البيانات موجودة على الجهاز نفسه يجب استخدام عنوان الجهاز نفسه, مثلا:
+     * في حالة كون قاعدة البيانات موجودة على الجهاز نفسه يجب استخدام عنوان
+     * الجهاز نفسه, مثلا:
      * <ul>
      * <li>localhost</li>
      * <li>127.0.0.1</li>
      * <li></li>
      * </ul>
+     *
      * @param host عنوان قاعدة البيانات
      * @param port رقم المنفذ
      */
-    public Database(String host, int port){
+    public Database(String host, int port) {
         this.host = host;
         this.port = port;
     }
 
     /**
-     * <p>بدء جلسة من قاعدة البيانات باسم المستخدم الممرر</p>
+     * <p>
+     * بدء جلسة من قاعدة البيانات باسم المستخدم الممرر</p>
      *
      * @param u المستخدم
      * @return جلسة
-     * @throws SofofException إذا كانت قاعدة البيانات غير مرتبطة بخادم يعمل أو إذا كانت المستخد غير مسجلا في الخادم
+     * @throws SofofException إذا كانت قاعدة البيانات غير مرتبطة بخادم يعمل أو
+     * إذا كانت المستخد غير مسجلا في الخادم
      */
     public Session startSession(User u) throws SofofException {
         return new Session(host, port, u, false);
     }
-    
+
     /**
-     * <p>بدء جلسة من قاعدة البيانات باسم المستخدم الممرر وبتحديد إذا كان الاتصال من الطبقة الآمنة أم لا</p>
+     * <p>
+     * بدء جلسة من قاعدة البيانات باسم المستخدم الممرر وبتحديد إذا كان الاتصال
+     * من الطبقة الآمنة أم لا</p>
      *
      * @param u المستخدم
      * @param ssl طبقة المقابس الآمنة
      * @return جلسة
-     * @throws SofofException إذا كانت قاعدة البيانات غير مرتبطة بخادم يعمل أو إذا كانت المستخد غير مسجلا في الخادم
+     * @throws SofofException إذا كانت قاعدة البيانات غير مرتبطة بخادم يعمل أو
+     * إذا كانت المستخد غير مسجلا في الخادم
      */
     public Session startSession(User u, boolean ssl) throws SofofException {
         return new Session(host, port, u, ssl);
     }
 
     /**
-     * <p>تنشئ قاعدة بيانات, إذا كان هناك قاعدة بيانات بنفس الاسم لن يتم عمل أي شيء.</p>
-     * 
-     *<p>يجب الانتباه إلى أن ملف قاعدة البيانات لا يجب أن يكون موجودا</p>
+     * <p>
+     * تنشئ قاعدة بيانات, إذا كان هناك قاعدة بيانات بنفس الاسم لن يتم عمل أي
+     * شيء.</p>
+     *
+     * <p>
+     * يجب الانتباه إلى أن ملف قاعدة البيانات لا يجب أن يكون موجودا</p>
+     *
      * @param db ملف قاعدة البيانات
      * @return تعيد صحيح إذا كانت قاعدة البيانات غير موجودة وخاطئ إذا كانت هناك
      * قاعدة موجودة بنفس الاسم
      * @throws SofofException إذا حدث أي خطأ دخل وخرج
      */
     public static boolean createDatabase(File db) throws SofofException {
-        if(db == null) throw new NullPointerException("can't start a local session with no path specified");
+        if (db == null) {
+            throw new NullPointerException("can't start a local session with no path specified");
+        }
         if (!db.exists()) {
             try {
                 db.mkdir();
                 File binds = new File(db, "binds");
                 binds.createNewFile();
-                BindTree bindTree = new BindTree(){{
-                    addBind(new Bind("SofofNoName"));
-                    addBind(new Bind("SofofCaptures"));
-                }};
+                BindTree bindTree = new BindTree();
+                bindTree.addBind(new BindTree.Bind("SofofNoName"));
+                bindTree.addBind(new BindTree.Bind("SofofCaptures"));
                 ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(binds, false));
                 oos.writeObject(bindTree);
                 oos.close();
@@ -103,19 +116,21 @@ public class Database {
             return false;
         }
     }
-    
+
     /**
-     * <p>ستقوم بإعداد الجلسات من ملف</p>
+     * <p>
+     * ستقوم بإعداد الجلسات من ملف</p>
      * sofof.xml
+     *
      * @throws SofofException في حال حدوث خطأ دخل وخرج
      */
-    public static void configure() throws SofofException{
-        if(Database.class.getResource("/sofof.xml")!= null){
-            Namespace namespace = Namespace.getNamespace("http://arabsefr.com/sofof/xsd");
+    public static void configure() throws SofofException {
+        if (Database.class.getResource("/sofof.xml") != null) {
+            Namespace namespace = Namespace.getNamespace("http://sofof.org/xsd");
             try {
                 Element sessionsEl = new SAXBuilder().build(Database.class.getResource("/sofof.xml")).getRootElement().getChild("sessions", namespace);
-                if(sessionsEl!=null){
-                    for(Element session : sessionsEl.getChildren("session", namespace)){
+                if (sessionsEl != null) {
+                    for (Element session : sessionsEl.getChildren("session", namespace)) {
                         Element user = session.getChild("user", namespace);
                         sessions.put(session.getAttributeValue("name"), new Database(session.getAttributeValue("host", "localhost"), Integer.valueOf(session.getAttributeValue("port"))).startSession(new User(user.getAttributeValue("name"), user.getAttributeValue("password")), Boolean.valueOf(session.getAttributeValue("ssl", "false"))));
                     }
@@ -127,18 +142,21 @@ public class Database {
             }
         }
     }
-    
+
     /**
      * تقوم بجلب الجلسة المقترنة باسمها من ملف sofof.xml
+     *
      * @param name اسم الجلسة في ملف sofof.xml
-     * @return الجلسة المقترنة بالاسم الممرر أو لا قيمة إذا لم يكن هناك جلسة بذلك الاسم
+     * @return الجلسة المقترنة بالاسم الممرر أو لا قيمة إذا لم يكن هناك جلسة
+     * بذلك الاسم
      */
-    public static Session getSession(String name){
+    public static Session getSession(String name) {
         return sessions.get(name);
     }
 
     /**
-     *<p> تتأكد من أن اسم الربط هو بلا اسم. إذا كان الاسم هو اللا قيمة أو كان فارغا
+     * <p>
+     * تتأكد من أن اسم الربط هو بلا اسم. إذا كان الاسم هو اللا قيمة أو كان فارغا
      * أو إذا كان عبارة عن مسافات فهو بلا اسم.</p>
      *
      * @param bind اسم الربط

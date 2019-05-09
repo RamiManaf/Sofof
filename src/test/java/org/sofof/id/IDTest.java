@@ -42,9 +42,10 @@ public class IDTest {
     }
     
     @AfterClass
-    public static void tearDownClass() throws SofofException {
+    public static void tearDownClass() throws SofofException, InterruptedException {
         session.close();
         server.shutdown();
+        Thread.sleep(1000);
     }
     
     @Before

@@ -5,13 +5,13 @@
  */
 package org.sofof.command;
 
-import org.sofof.ListInputStream;
 import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import org.sofof.command.sorter.Sorter;
 import java.io.Serializable;
 import java.util.LinkedList;
 import java.util.List;
+import org.sofof.ListInputStream;
 
 /**
  * تحديد يقوم بتحديد الكائنات التي سيتم الاستعلام عنها ضمن الشروط المحددة

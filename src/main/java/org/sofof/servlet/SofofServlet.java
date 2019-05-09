@@ -16,12 +16,12 @@ import javax.servlet.http.HttpServlet;
 /**
  * <h3>مشغل الخادم</h3>
  * <p>
- * يقوم هذا المشغل بتشغيل الخادم يعد أن يتم ضبط ملف الweb.xml لتشغيل هذا خويدم,
+ * يقوم هذا المشغل بتشغيل الخادم بعد أن يتم ضبط ملف الweb.xml لتشغيل هذا خويدم,
  * ويتم تمرير الإعدادات الخاصة بالخادم من خلال الملف أيضا.</p>
  * <blockquote><pre>
  * {@code <servlet>
  *         <servlet-name>Sofof Server</servlet-name>
- *         <servlet-class>com.sefr.sofof.servlet.SofofServlet</servlet-class>
+ *         <servlet-class>org.sofof.servlet.SofofServlet</servlet-class>
  *         <load-on-startup>0</load-on-startup>
  *         <init-param>
  *             <param-name>path</param-name>

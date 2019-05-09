@@ -5,10 +5,10 @@
  */
 package org.sofof.command;
 
-import org.sofof.ListInputStream;
-import org.sofof.ListOutputStream;
 import org.sofof.SofofException;
 import java.io.Serializable;
+import org.sofof.ListInputStream;
+import org.sofof.ListOutputStream;
 
 /**
  *أمر يقوم  بالتعديل على قاعدة البيانات

@@ -5,12 +5,12 @@
  */
 package org.sofof.command;
 
-import org.sofof.ListInputStream;
-import org.sofof.ListOutputStream;
 import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import java.io.Serializable;
 import java.util.List;
+import org.sofof.ListInputStream;
+import org.sofof.ListOutputStream;
 
 /**
  * تحديث الكائنات المحددة

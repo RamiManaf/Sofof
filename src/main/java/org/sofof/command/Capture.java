@@ -61,7 +61,7 @@ public class Capture implements Serializable {
      * واحدة فقط للصف الواحد في قاعدة البيانات.</p>
      * <p>
      * اللقطة هي تسجيل لقيمة بعض المتغيرات في الكائن, والتي يتم تحديدها باستخدام
-     * {@link com.sefr.sofof.capture.Particle}.</p>
+     * {@link org.sofof.capture.Particle}.</p>
      *
      * @param obj الكائن الذي سيتم التقاطه
      * @throws SofofException
