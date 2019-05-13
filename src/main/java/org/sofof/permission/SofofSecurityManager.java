@@ -44,6 +44,6 @@ public interface SofofSecurityManager {
      * @param executable الأمر التنفيذي
      * @throws SecurityException يتم إطلاقها في حال عدم إعطاء المستخدم الإذن
      */
-    public void checkExecutable(User user, Executable executable) throws SofofException;
+    public void checkExecutable(User user, Executable executable) throws SecurityException;
     
 }
