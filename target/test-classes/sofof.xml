@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+
+
+<sofof
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+    xmlns='http://sofof.org/xsd'>
+    <server port="6969">
+        <database name="test-db"/>
+        <users>
+            <user admin="true" name="Rami" password="password"/>
+            <user admin="false" name="user2" password="password"/>
+        </users>
+    </server>
+    <sessions>
+        <session name="test" port="6969">
+            <user name="Rami" password="password"/>
+        </session>
+    </sessions>
+</sofof>

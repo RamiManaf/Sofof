@@ -65,7 +65,7 @@ public class Session implements AutoCloseable {
      * @return عدد الكائنات التي تأثرت بالأمر
      * @throws SofofException حدوث خطأ في الاتصال بالخادم
      */
-    public int execute(Executable exe) throws SofofException {
+    public synchronized int execute(Executable exe) throws SofofException {
         try {
             out.reset();
             out.writeObject(true);
@@ -88,7 +88,7 @@ public class Session implements AutoCloseable {
      * @return تعيد قائمة بالكائنات المستعلم عنها أو قائمة فارغة, لا تعيد أبدا لا قيمة
      * @throws SofofException حدوث خطأ في الاتصال بالخادم
      */
-    public List query(Query q) throws SofofException {
+    public synchronized List query(Query q) throws SofofException {
         try {
             out.reset();
             out.writeObject(false);
