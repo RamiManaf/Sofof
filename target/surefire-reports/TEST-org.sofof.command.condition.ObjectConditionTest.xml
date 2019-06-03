@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<testsuite tests="10" failures="0" name="org.sofof.command.condition.ObjectConditionTest" time="0.021" errors="0" skipped="0">
+<testsuite tests="11" failures="0" name="org.sofof.command.condition.ObjectConditionTest" time="0.359" errors="0" skipped="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_111\jre\bin"/>
@@ -16,6 +16,7 @@
     <property name="user.country" value="US"/>
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="sun.os.patch.level" value=""/>
+    <property name="test" value="org.sofof.command.condition.ObjectConditionTest"/>
     <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
     <property name="user.dir" value="C:\Users\LENOVO PC\Documents\NetBeansProjects\Sofof"/>
     <property name="java.runtime.version" value="1.8.0_111-b14"/>
@@ -48,7 +49,7 @@
     <property name="java.vm.specification.version" value="1.8"/>
     <property name="sun.arch.data.model" value="64"/>
     <property name="java.home" value="C:\Program Files\Java\jdk1.8.0_111\jre"/>
-    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -Dmaven.ext.class.path=C:\Program Files\netbeans\java\maven-nblib\netbeans-eventspy.jar -Dfile.encoding=UTF-8 clean install"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher -Dtest=org.sofof.command.condition.ObjectConditionTest -Dmaven.ext.class.path=C:\Program Files\netbeans\java\maven-nblib\netbeans-eventspy.jar -Dfile.encoding=UTF-8 surefire:test"/>
     <property name="java.specification.vendor" value="Oracle Corporation"/>
     <property name="user.language" value="en"/>
     <property name="user.language.format" value="ar"/>
@@ -66,14 +67,15 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest1" time="0.011"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest1" time="0.015"/>
   <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest2" time="0"/>
   <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest3" time="0"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest4" time="0.003"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest5" time="0"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest6" time="0.002"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest7" time="0.001"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest8" time="0"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest9" time="0.001"/>
-  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest10" time="0.003"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest4" time="0.01"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest5" time="0.071"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest6" time="0.06"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest7" time="0.064"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest8" time="0.001"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest9" time="0.068"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest10" time="0.002"/>
+  <testcase classname="org.sofof.command.condition.ObjectConditionTest" name="checkTest11" time="0.068"/>
 </testsuite>

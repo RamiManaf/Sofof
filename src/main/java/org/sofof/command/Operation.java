@@ -7,15 +7,16 @@ package org.sofof.command;
 
 import org.sofof.command.condition.ObjectCondition;
 import java.io.Serializable;
+import org.sofof.SofofException;
 
 /**
- *<h3>عملية</h3>
- * يقوم الصف عملية بإجراء عمليات المقارنة
- * بين طرفين
+ * <h3>عملية</h3>
+ * يقوم الصف عملية بإجراء عمليات المقارنة بين طرفين
+ *
  * @see ObjectCondition
  * @author Rami Manaf Abdullah
  */
-public enum Operation implements Serializable{
+public enum Operation implements Serializable {
     /**
      * يساوي
      */
@@ -40,7 +41,7 @@ public enum Operation implements Serializable{
      * أصغر أو يساوي
      */
     LessOrEqual;
-    
+
     private static final long serialVersionUID = 793298438908l;
 
     /**
@@ -50,53 +51,42 @@ public enum Operation implements Serializable{
      * @return
      */
     public boolean operate(double x, double y) {
-        if (this.equals(Equal)) {
-            return x == y;
+        switch (this) {
+            case Equal:
+                return x == y;
+            case NotEqual:
+                return x != y;
+            case Greater:
+                return x > y;
+            case GreaterOrEqual:
+                return x >= y;
+            case Less:
+                return x < y;
+            case LessOrEqual:
+                return x <= y;
+            default:
+                return false;
         }
-        if (this.equals(NotEqual)) {
-            return x != y;
-        }
-        if (this.equals(Greater)) {
-            return x > y;
-        }
-        if (this.equals(GreaterOrEqual)) {
-            return x >= y;
-        }
-        if (this.equals(Less)) {
-            return x < y;
-        }
-        if (this.equals(LessOrEqual)) {
-            return x <= y;
-        }
-        return false;
     }
 
-    /**
-     *
-     * @param a
-     * @param b
-     * @return
-     */
-    public boolean operate(boolean a, boolean b) {
-        if (this.equals(Equal)) {
-            return a == b;
-        } else if (this.equals(NotEqual)) {
-            return a != b;
-        }
-        assert false;
-        return false;
-    }
-    
     /**
      *
      * @param obj
      * @param obj2
      * @return
+     * @throws org.sofof.SofofException
      */
-    public boolean operate(Object obj, Object obj2){
-        if(this.equals(Equal))return obj.equals(obj2);
-        if(this.equals(NotEqual))return !obj.equals(obj2);
-        assert false;
-        return false;
+    public boolean operate(Object obj, Object obj2) throws SofofException {
+        if (obj instanceof Number && obj2 instanceof Number) {
+            return operate(((Number) obj).doubleValue(), ((Number) obj2).doubleValue());
+        }
+        switch (this) {
+            case Equal:
+                return obj.equals(obj2);
+            case NotEqual:
+                return !obj.equals(obj2);
+            default:
+                throw new SofofException("the operation " + name() + " can not be operated on " + obj.getClass().getName());
+        }
     }
 }

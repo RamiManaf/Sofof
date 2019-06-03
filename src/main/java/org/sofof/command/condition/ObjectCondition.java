@@ -18,12 +18,13 @@ import java.io.Serializable;
  * </p>
  * <p>
  * {@link org.sofof.command.ExpressionExecuter النص التنفيذي}
- * 
+ *
  * يتم تطبيق النص التنفيذي وتحويله إما إلى كائن أو إلى قيمة عددية أو منطقية
- * وتتوفر لك مجموعة من عمليات المقارنة بحيث تستطيع مقارنة نواتج النصين التنفيذيين
- * عبر التعداد {@link Operation}
+ * وتتوفر لك مجموعة من عمليات المقارنة بحيث تستطيع مقارنة نواتج النصين
+ * التنفيذيين عبر التعداد {@link Operation}
  * </p>
- * يمكنك تنفيذ الدوال واستدعاء الحقول على نواتج دوال أو حقول أخرى وهذه بعض الأمثلة
+ * يمكنك تنفيذ الدوال واستدعاء الحقول على نواتج دوال أو حقول أخرى وهذه بعض
+ * الأمثلة
  * <blockquote><pre>
  * ObjectCondition cond = new ObjectCondition("#getMark()", Operation.Greater, "#50");
  * ObjectCondition cond = new ObjectCondition("#getName()", Operation.Equal, "Rami");
@@ -35,17 +36,16 @@ import java.io.Serializable;
 public class ObjectCondition implements Condition, Serializable {
 
     private static final long serialVersionUID = 8906943849l;
-    
+
     private Object side1;
     private Object side2;
     private Operation operation;
 
     /**
      * إنشاء شرط كائني بتمرير نصين تنفيذيين على الكائن وعملية للمقارنة بين
-     * نتيجتي النصين الممررين
-     * يمكن أن يكون الناتج عن النصين كائنا معينا وعندها يمكن فقط تنفيذ
-     * العمليتين يساوي أو لا يساوي
-     *  {@link ExpressionExecuter النص التنفيذي}
+     * نتيجتي النصين الممررين يمكن أن يكون الناتج عن النصين كائنا معينا وعندها
+     * يمكن فقط تنفيذ العمليتين يساوي أو لا يساوي
+     * {@link ExpressionExecuter النص التنفيذي}
      *
      * @param side1 النص التنفيذي الأول
      * @param operation العملية
@@ -62,35 +62,20 @@ public class ObjectCondition implements Condition, Serializable {
         Object obj2 = obj;
         obj = execute(side1, obj);
         obj2 = execute(side2, obj2);
-        return operate(obj, obj2);
+        return operation.operate(obj, obj2);
     }
-    
-    private Object execute(Object side, Object obj) throws SofofException{
-        if(!(side instanceof String)){
+
+    private Object execute(Object side, Object obj) throws SofofException {
+        if (!(side instanceof String)) {
             return side;
         }
         String expression = (String) side;
-        if(!expression.startsWith("#")){
+        if (!expression.startsWith("#")) {
             return expression;
-        }else if(expression.startsWith("##")){
+        } else if (expression.startsWith("##")) {
             return expression.substring(1);
-        }else return ExpressionExecuter.execute(expression, obj);
-    }
-
-    private boolean operate(Object obj, Object obj2) throws SofofException {
-        if (obj instanceof Boolean) {
-            if (!(operation.equals(Operation.Equal) || operation.equals(Operation.NotEqual))) {
-                throw new SofofException("the operation " + operation.name() + " can not be operated on boolean");
-            }
-            return operation.operate((boolean) obj, (boolean) obj2);
-        } else if (obj instanceof Number) {
-            return operation.operate(((Number) obj).doubleValue(), ((Number) obj2).doubleValue());
         } else {
-            if ((operation.equals(Operation.Equal) || operation.equals(Operation.NotEqual))) {
-                return operation.operate(obj, obj2);
-            } else {
-                throw new SofofException("the operation " + operation.name() + " can not be operated on " + obj.getClass().getName());
-            }
+            return ExpressionExecuter.execute(expression, obj);
         }
     }
 }
