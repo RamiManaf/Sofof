@@ -5,7 +5,6 @@
  */
 package org.sofof.command.condition;
 
-import org.sofof.command.condition.ObjectCondition;
 import org.sofof.TestClass;
 import org.sofof.command.Operation;
 import org.junit.After;
@@ -145,7 +144,7 @@ public class ObjectConditionTest {
     public void checkTest8() throws Exception {
         Object obj = new TestClass();
         ObjectCondition instance = null;
-        instance = new ObjectCondition("#textLength('hi'S)", Operation.Equal, "#2");
+        instance = new ObjectCondition("#textLength(\"hi\"S)", Operation.Equal, "#2");
         boolean expResult = true;
         boolean result = instance.check(obj);
         assertEquals(expResult, result);
@@ -173,7 +172,21 @@ public class ObjectConditionTest {
     public void checkTest10() throws Exception {
         Object obj = new TestClass();
         ObjectCondition instance = null;
-        instance = new ObjectCondition("#multiParams( 'hello'S, 5i)", Operation.Equal, "#5");
+        instance = new ObjectCondition("#multiParams( \"hello\"S, 5i)", Operation.Equal, "#5");
+        boolean expResult = true;
+        boolean result = instance.check(obj);
+        assertEquals(expResult, result);
+        // TODO review the generated test code and remove the default call to fail.
+    }
+    
+    /**
+     * Test of check method, of class ObjectCondition.
+     */
+    @Test
+    public void checkTest11() throws Exception {
+        Object obj = new TestClass();
+        ObjectCondition instance = null;
+        instance = new ObjectCondition("#methodReturnHello().toCharArray()[0].equals('H'O)", Operation.Equal, "#true");
         boolean expResult = true;
         boolean result = instance.check(obj);
         assertEquals(expResult, result);

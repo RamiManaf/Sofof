@@ -5,6 +5,7 @@
  */
 package org.sofof.command;
 
+import java.lang.reflect.Array;
 import org.sofof.SofofException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
+import java.util.regex.Pattern;
 
 /**
  * <h3>النص التنفيذي</h3>
@@ -30,7 +32,7 @@ import java.util.Vector;
  * <tr>
  * <td>String</td>
  * <td>S</td>
- * <td>يجب إحاطتها بإشارة اقتباس غير مزدوجة</td>
+ * <td>يجب إحاطتها بإشارة اقتباس مزدوجة</td>
  * </tr>
  * <tr>
  * <td>Character</td>
@@ -103,7 +105,13 @@ import java.util.Vector;
  */
 public class ExpressionExecuter {
 
+    private static final Pattern DIGIT = Pattern.compile("[\\d]*[.]?[\\d]+");
+    private static final Pattern DECIMAL_POINT = Pattern.compile("[\\d]*[.]{1}[\\d]+");
+    private static final Pattern METHOD = Pattern.compile("([a-zA-Z0-9_$]+)*\\(.*\\)(\\[\\d\\])?");
+    private static final Pattern FIELD = Pattern.compile("([a-zA-Z0-9_$]+)*(\\[\\d\\])?");
+
     public static Object execute(String expression, Object obj) throws SofofException {
+        //expression starter
         if (!expression.startsWith("#")) {
             throw new SofofException("not a valide expression. # misseds");
         }
@@ -111,173 +119,224 @@ public class ExpressionExecuter {
         if (expression.isEmpty()) {
             return obj;
         }
-        if (expression.equalsIgnoreCase("true") || expression.equalsIgnoreCase("false")) {
-            return Boolean.valueOf(expression);
-        } else if (expression.matches("[\\d]*[.]?[\\d]+")) {
-            return Double.valueOf(expression);
+        //parse to a data type
+        if (expression.startsWith("'") || expression.startsWith("\"") || Character.isDigit(expression.charAt(0)) || expression.equals("true") || expression.equals("false")) {
+            return parseDataType(expression)[1];
         }
-        String[] fomArr = expression.split("[.]");
-        List<String> tokens = new ArrayList<>();
-        for (int x = 0; x < fomArr.length; x++) {
-            if (!fomArr[x].matches("([a-zA-Z0-9_$]+)*\\(.*\\)")
-                    && !fomArr[x].matches("([a-zA-Z0-9_$]+) *")) {
-                fomArr[x + 1] = fomArr[x] + fomArr[x + 1];
-            } else {
-                tokens.add(fomArr[x]);
+        //expression in this point is either a field or method
+        List<String> fieldsAndMethodes = fieldsAndMethodesAssempler(expression.split("[.]"));
+        for (String fieldOrMethod : fieldsAndMethodes) {
+            int arrayIndex = -1;
+            //check if the method or parameter ends with an array brackets
+            if (fieldOrMethod.endsWith("]")) {
+                String[] temp = fieldOrMethod.substring(0, fieldOrMethod.length() - 1).split("\\[");
+                arrayIndex = Integer.parseInt(temp[temp.length - 1]);
+                fieldOrMethod = "";
+                for (int x = 0; x < temp.length - 1; x++) {
+                    fieldOrMethod = fieldOrMethod.concat(temp[x]);
+                }
             }
-        }
-        for (String fom : tokens) {
-            if (fom.contains("(")) {
-                fom = fom.subSequence(0, fom.length() - 1).toString();
-                String[] np = fom.split("[(]");
-                Vector<Object> params = null;
-                Class[] classes = null;
-                if (np.length == 2) {
-                    params = new Vector<>(Arrays.asList(np[1].split("[,]")));
+            //check if the fieldOrMethod variable is a field or method
+            if (fieldOrMethod.contains("(")) {
+                fieldOrMethod = fieldOrMethod.substring(0, fieldOrMethod.length() - 1);
+                String[] nameAndParameters = fieldOrMethod.split("[(]");
+                String name = nameAndParameters[0];
+                String parameters = "";
+                for (int i = 1; i < nameAndParameters.length; i++) {
+                    parameters = parameters.concat(nameAndParameters[i]);
+                }
+                Vector<Object> params = new Vector<>();
+                Class[] classes = new Class[0];
+                if (!parameters.isEmpty()) {
+                    params.addAll(methodParametersAssempler(parameters.split("[,]")));
                     classes = new Class[params.size()];
                     for (int x = 0; x < params.size(); x++) {
-                        String param = ((String) params.get(x)).trim();
-                        if (param.startsWith("'") && (param.endsWith("C") || param.endsWith("c"))) {
-                            classes[x] = param.endsWith("O") ? Object.class : param.endsWith("C") ? Character.class : char.class;
-                            params.set(x, param.trim().charAt(1));
-                        } else if (param.startsWith("'")) {
-                            classes[x] = param.endsWith("O") ? Object.class : String.class;
-                            params.set(x, param.trim().subSequence(1, param.length() - 2).toString());
-                        } else if (param.startsWith("true") || param.startsWith("false")) {
-                            classes[x] = param.endsWith("O") ? Object.class : param.endsWith("B") ? Boolean.class : boolean.class;
-                            params.set(x, Boolean.valueOf(param.substring(0, param.length() - 1)));
-                        } else {
-                            if (param.substring(0, param.length() - 1).matches("[\\d]*[.]{1}[\\d]+")) {
-                                switch (param.charAt(param.length() - 1)) {
-                                    case 'D': {
-                                        classes[x] = Double.class;
-                                        params.set(x, Double.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'd': {
-                                        classes[x] = double.class;
-                                        params.set(x, Double.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'F': {
-                                        classes[x] = Float.class;
-                                        params.set(x, Float.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'f': {
-                                        classes[x] = float.class;
-                                        params.set(x, Float.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'O': {
-                                        classes[x] = Object.class;
-                                        params.set(x, Float.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    default: {
-                                        classes[x] = float.class;
-                                        params.set(x, Float.valueOf(param.substring(0, param.length() - 1)));
-                                    }
-                                }
-                            } else {
-                                switch (param.charAt(param.length() - 1)) {
-                                    case 'I': {
-                                        classes[x] = Integer.class;
-                                        params.set(x, Integer.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'i': {
-                                        classes[x] = int.class;
-                                        params.set(x, Integer.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'l': {
-                                        classes[x] = long.class;
-                                        params.set(x, Long.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'L': {
-                                        classes[x] = Long.class;
-                                        params.set(x, Long.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'H': {
-                                        classes[x] = Short.class;
-                                        params.set(x, Short.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'h': {
-                                        classes[x] = short.class;
-                                        params.set(x, Short.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'b': {
-                                        classes[x] = byte.class;
-                                        params.set(x, Byte.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'B': {
-                                        classes[x] = Byte.class;
-                                        params.set(x, Byte.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-
-                                    case 'O': {
-                                        classes[x] = Object.class;
-                                        params.set(x, Integer.valueOf(param.substring(0, param.length() - 1)));
-                                        break;
-                                    }
-                                    default: {
-                                        classes[x] = int.class;
-                                        params.set(x, Integer.valueOf(param.substring(0, param.length() - 1)));
-                                    }
-                                }
-                            }
-                        }
+                        Object[] dataTypeAndValue = parseDataType(((String) params.get(x)).trim());
+                        classes[x] = (Class) dataTypeAndValue[0];
+                        params.set(x, dataTypeAndValue[1]);
                     }
                 }
                 try {
-                    Method method = obj.getClass().getMethod(np[0], classes != null ? (Class<?>[]) classes : new Class[0]);
+                    Method method = obj.getClass().getMethod(name, classes);
                     method.setAccessible(true);
-                    obj = method.invoke(obj, params != null ? params.toArray() : new Object[0]);
+                    obj = method.invoke(obj, params.toArray());
                 } catch (NoSuchMethodException ex) {
-                    throw new SofofException("there is no method with name " + np[0] + " and params " + Arrays.toString(classes));
+                    throw new SofofException("there is no method with name " + name + " and params " + Arrays.toString(classes));
                 } catch (SecurityException ex) {
                 } catch (IllegalAccessException ex) {
-                    throw new SofofException("the method name " + np[0] + " with params " + classes.toString() + " is private or protected");
+                    throw new SofofException("the method name " + name + " with params " + classes.toString() + " is private or protected");
                 } catch (IllegalArgumentException ex) {
                 } catch (InvocationTargetException ex) {
-                    throw new SofofException("the method name " + np[0] + " with params " + classes.toString() + " threw " + ex.getClass().getName() + "\n"
+                    throw new SofofException("the method name " + name + " with params " + classes.toString() + " threw " + ex.getClass().getName() + "\n"
                             + ex.getTargetException().getMessage());
                 }
             } else {
                 try {
-                    Field field = obj.getClass().getField(fom);
+                    Field field = obj.getClass().getField(fieldOrMethod);
                     field.setAccessible(true);
                     obj = field.get(obj);
                 } catch (NoSuchFieldException ex) {
-                    throw new SofofException("no such field with name " + fom);
+                    throw new SofofException("no such field with name " + fieldOrMethod);
                 } catch (SecurityException ex) {
                     throw new SofofException(ex.getMessage());
                 } catch (IllegalArgumentException ex) {
                 } catch (IllegalAccessException ex) {
-                    throw new SofofException("the field " + fom + " is private or protected");
+                    throw new SofofException("the field " + fieldOrMethod + " is private or protected");
                 }
+            }
+            if (arrayIndex != -1) {
+                obj = Array.get(obj, arrayIndex);
             }
         }
         return obj;
+    }
+
+    private static ArrayList<String> methodParametersAssempler(String[] parameters) throws SofofException {
+        ArrayList<String> result = new ArrayList<>();
+        for (int i = 0; i < parameters.length; i++) {
+            String parameter = parameters[i].trim();
+            if (parameter.startsWith("'") && !parameter.substring(0, parameter.length() - 1).endsWith("'")) {
+                if (i + 1 < parameters.length) {
+                    parameters[i + 1] = parameters[i] + parameters[i + 1];
+                } else {
+                    throw new SofofException(parameters[i] + "don't match the expected regex");
+                }
+            } else {
+                result.add(parameter);
+            }
+        }
+        return result;
+    }
+
+    private static ArrayList<String> fieldsAndMethodesAssempler(String[] chunkes) throws SofofException {
+        ArrayList<String> result = new ArrayList<>();
+        for (int i = 0; i < chunkes.length; i++) {
+            if (!FIELD.matcher(chunkes[i]).matches() && !METHOD.matcher(chunkes[i]).matches()) {
+                if (i + 1 < chunkes.length) {
+                    chunkes[i + 1] = chunkes[i] + chunkes[i + 1];
+                } else {
+                    throw new SofofException("The expresion " + chunkes[i] + " is not a method nor a field name");
+                }
+            } else {
+                result.add(chunkes[i]);
+            }
+        }
+        return result;
+    }
+
+    private static Object[] parseDataType(String data) {
+        Class type;
+        Object value;
+        if (data.startsWith("'")) {
+            type = data.endsWith("O") ? Object.class : data.endsWith("C") ? Character.class : char.class;
+            value = data.trim().charAt(1);
+        } else if (data.startsWith("\"")) {
+            type = data.endsWith("O") ? Object.class : String.class;
+            value = data.trim().substring(1, data.endsWith("\"") ? data.length() - 1 : data.length() - 2);
+        } else if (data.startsWith("true") || data.startsWith("false")) {
+            type = data.endsWith("O") ? Object.class : data.endsWith("B") ? Boolean.class : boolean.class;
+            value = Boolean.valueOf(data.length() == 4 ? data : data.substring(0, data.length() - 1));
+        } else {
+            if (DECIMAL_POINT.matcher(data.substring(0, data.length() - 1)).matches() || DECIMAL_POINT.matcher(data).matches()) {
+                switch (data.charAt(data.length() - 1)) {
+                    case 'D': {
+                        type = Double.class;
+                        value = Double.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'd': {
+                        type = double.class;
+                        value = Double.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'F': {
+                        type = Float.class;
+                        value = Float.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'f': {
+                        type = float.class;
+                        value = Float.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'O': {
+                        type = Object.class;
+                        value = Float.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    default: {
+                        type = float.class;
+                        value = Float.valueOf(Character.isDigit(data.charAt(data.length() - 1)) ? data : data.substring(0, data.length() - 1));
+                    }
+                }
+            } else {
+                switch (data.charAt(data.length() - 1)) {
+                    case 'I': {
+                        type = Integer.class;
+                        value = Integer.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'i': {
+                        type = int.class;
+                        value = Integer.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'l': {
+                        type = long.class;
+                        value = Long.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'L': {
+                        type = Long.class;
+                        value = Long.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'H': {
+                        type = Short.class;
+                        value = Short.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'h': {
+                        type = short.class;
+                        value = Short.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'b': {
+                        type = byte.class;
+                        value = Byte.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'B': {
+                        type = Byte.class;
+                        value = Byte.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+
+                    case 'O': {
+                        type = Object.class;
+                        value = Integer.valueOf(data.substring(0, data.length() - 1));
+                        break;
+                    }
+                    default: {
+                        type = int.class;
+                        value = Integer.valueOf(Character.isDigit(data.charAt(data.length() - 1)) ? data : data.substring(0, data.length() - 1));
+                    }
+                }
+            }
+        }
+        return new Object[]{type, value};
     }
 
 }

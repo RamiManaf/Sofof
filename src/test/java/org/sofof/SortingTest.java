@@ -5,7 +5,6 @@
  */
 package org.sofof;
 
-import org.sofof.SofofException;
 import org.sofof.command.sorter.ObjectSorter;
 import org.sofof.command.sorter.Order;
 import java.util.Arrays;

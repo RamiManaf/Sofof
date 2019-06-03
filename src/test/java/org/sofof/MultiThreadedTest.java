@@ -5,6 +5,7 @@
  */
 package org.sofof;
 
+import java.io.File;
 import org.sofof.bean.Student;
 import org.sofof.command.Bind;
 import org.sofof.command.Select;
@@ -34,9 +35,11 @@ public class MultiThreadedTest {
 
     @BeforeClass
     public static void setUpClass() throws SofofException, InterruptedException {
+        Database.createDatabase(new File("test-db"));
         latch = new CountDownLatch(BIND_COUNT);
-        server = new Server();
+        server = new Server(new File("test-db"), 6969, false);
         server.configure();
+        server.getUsers().add(new User("Rami", "password"));
         server.startUp();
         db = new Database("localhost", 6969);
     }
