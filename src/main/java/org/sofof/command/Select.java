@@ -9,6 +9,8 @@ import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import org.sofof.command.sorter.Sorter;
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import org.sofof.ListInputStream;
@@ -28,6 +30,7 @@ public class Select implements Query, Serializable {
     private String expression;
     private Condition condition;
     private Sorter sorter;
+    private boolean shuffle;
 
     /**
      * تنشئ استعلام عن الصفوف المحددة
@@ -35,7 +38,7 @@ public class Select implements Query, Serializable {
      * @param c الصفوف
      */
     public Select(Class c) {
-        clazz = c;
+        this(c, null);
     }
 
     /**
@@ -48,8 +51,23 @@ public class Select implements Query, Serializable {
      * @param expression النص التنفيذي
      */
     public Select(Class c, String expression) {
+        this(c, expression, false);
+    }
+
+    /**
+     * تنشئ استعلام عن نواتج تنفيذ النص على كائنات الصف الممرر
+     * <blockquote><pre>
+     * List marks = session.query(new Select(Student.class, "#getMark()", false));
+     * </pre></blockquote>
+     *
+     * @param c الصف
+     * @param expression النص التنفيذي
+     * @param shufle تحدد ما إن كنت تريد خلط الكائنات قبل التحقق منها من خلال الشروط
+     */
+    public Select(Class c, String expression, boolean shufle) {
         clazz = c;
         this.expression = expression;
+        this.shuffle = shufle;
     }
 
     /**
@@ -90,6 +108,7 @@ public class Select implements Query, Serializable {
     @Override
     public List query(ListInputStream in) throws SofofException {
         LinkedList objs = in.read(bind, clazz);
+        if(shuffle)Collections.shuffle(objs);
         if (condition != null) {
             for (Object obj : (List) objs.clone()) {
                 if (!condition.check(obj)) {

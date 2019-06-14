@@ -24,35 +24,98 @@ public interface Condition extends Serializable{
     
     /**
      * تقوم بالعملية و المنطقية
-     * @param cond الشرط الممرر
+     * @param condition الشرط الممرر
      * @return تعيد شرطا يطبق العملية المنطقية و على هذا الشرط والشرط الممرر
      */
-    default public Condition and(Condition cond){
-        Condition th=this;
-        return (Object obj) -> th.check(obj)&&cond.check(obj);
+    default public Condition and(Condition condition){
+        return new LogicalAndCondition(this, condition);
     }
     
     /**
      * تقوم بالعملية أو المنطقية
-     * @param cond الشرط الممرر
+     * @param condition الشرط الممرر
      * @return تعيد شرطا يطبق العملية المنطقية أو على هذا الشرط والشرط الممرر
      */
-    default public Condition or(Condition cond){
-        Condition th=this;
-        return (Object obj) -> th.check(obj)||cond.check(obj);
+    default public Condition or(Condition condition){
+        return new LogicalOrCondition(this, condition);
     }
     
     /**
      * تقوم بالعملية أو الخاصة
-     * @param cond الشرط الممرر
+     * @param condition الشرط الممرر
      * @return تعيد شرطا يطبق العملية المنطقية أو الخاصة على هذا الشرط والشرط الممرر
      */
-    default public Condition xor(Condition cond){
-        Condition th=this;
-        return (Object obj) -> Boolean.logicalXor(th.check(obj),cond.check(obj));
+    default public Condition xor(Condition condition){
+        return new LogicalXOrCondition(this, condition);
     }
     
     default public Condition not(){
-        return (Object obj) -> !this.check(obj);
+        return new LogicalNotCondition(this);
+    }
+    
+    class LogicalOrCondition implements Condition{
+        
+        private Condition first;
+        private Condition second;
+
+        public LogicalOrCondition(Condition first, Condition second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public boolean check(Object obj) throws SofofException {
+            return first.check(obj) || second.check(obj);
+        }
+        
+    }
+    
+    class LogicalXOrCondition implements Condition{
+        
+        private Condition first;
+        private Condition second;
+
+        public LogicalXOrCondition(Condition first, Condition second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public boolean check(Object obj) throws SofofException {
+            return first.check(obj) ^ second.check(obj);
+        }
+        
+    }
+    
+    class LogicalNotCondition implements Condition{
+        
+        private Condition condition;
+
+        public LogicalNotCondition(Condition condition) {
+            this.condition = condition;
+        }
+
+        @Override
+        public boolean check(Object obj) throws SofofException {
+            return !condition.check(obj);
+        }
+        
+    }
+    
+    class LogicalAndCondition implements Condition{
+        
+        private Condition first;
+        private Condition second;
+
+        public LogicalAndCondition(Condition first, Condition second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public boolean check(Object obj) throws SofofException {
+            return first.check(obj) && second.check(obj);
+        }
+        
     }
 }

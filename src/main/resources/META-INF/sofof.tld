@@ -142,6 +142,11 @@
             <type>org.sofof.command.sorter.Sorter</type>
         </attribute>
         <attribute>
+            <name>shuffle</name>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.Boolean</type>
+        </attribute>
+        <attribute>
             <name>var</name>
             <required>true</required>
             <rtexprvalue>true</rtexprvalue>

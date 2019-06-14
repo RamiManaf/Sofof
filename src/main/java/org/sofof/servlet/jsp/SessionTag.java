@@ -5,8 +5,6 @@
  */
 package org.sofof.servlet.jsp;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.sofof.Database;
 import org.sofof.Session;
 import org.sofof.SofofException;

@@ -25,7 +25,12 @@ public class SelectTag extends TagSupport {
     private String from;
     private Condition where;
     private Sorter sort;
+    private boolean shuffle;
     private String var;
+
+    public SelectTag() {
+        shuffle = false;
+    }
 
     public void setClazz(Class clazz) {
         this.clazz = clazz;
@@ -47,6 +52,10 @@ public class SelectTag extends TagSupport {
         this.sort = sort;
     }
 
+    public void setShuffle(Boolean shuffle) {
+        this.shuffle = shuffle;
+    }
+
     public void setVar(String var) {
         this.var = var;
     }
@@ -54,7 +63,7 @@ public class SelectTag extends TagSupport {
     @Override
     public int doStartTag() throws JspException {
         try {
-            pageContext.setAttribute(var, SessionTag.getSession(this).query(new Select(clazz, expression).from(from).where(where).sort(sort)), PageContext.PAGE_SCOPE);
+            pageContext.setAttribute(var, SessionTag.getSession(this).query(new Select(clazz, expression, shuffle).from(from).where(where).sort(sort)), PageContext.PAGE_SCOPE);
         } catch (SofofException ex) {
             throw new JspTagException(ex);
         }
