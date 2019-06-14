@@ -7,8 +7,9 @@
     </description>
     <groupId>org.sofof</groupId>
     <artifactId>sofof</artifactId>
-    <version>2.1.2-SNAPSHOT</version>
+    <version>2.1.1</version>
     <packaging>jar</packaging>
+    <url>https://github.com/RamiManaf/Sofof</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -46,7 +47,7 @@
     <licenses>
         <license>
             <name>public waqf license</name>
-            <url>https://ojuba.org/waqf-2.0:%D8%B1%D8%AE%D8%B5%D8%A9_%D9%88%D9%82%D9%81_%D8%A7%D9%84%D8%B9%D8%A7%D9%85%D8%A9</url>
+            <url>https://ojuba.org/waqf:license</url>
         </license>
     </licenses>
     <build>
