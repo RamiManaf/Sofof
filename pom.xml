@@ -167,7 +167,7 @@
         <connection>scm:git:git://github.com/RamiManaf/Sofof.git</connection>
         <developerConnection>scm:git:git@github.com:RamiManaf/Sofof.git</developerConnection>
         <url>https://github.com/RamiManaf/Sofof</url>
-        <tag>HEAD</tag>
+        <tag>2.1.1</tag>
     </scm>
     <profiles>
         <!-- GPG Signature on release -->
