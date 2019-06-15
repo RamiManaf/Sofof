@@ -5,7 +5,7 @@
     <description>
         a database for storing classes in an easy and fast way.
     </description>
-    <groupId>org.sofof</groupId>
+    <groupId>io.github.ramimanaf</groupId>
     <artifactId>sofof</artifactId>
     <version>2.1.1</version>
     <packaging>jar</packaging>
@@ -168,7 +168,7 @@
         <connection>scm:git:git://github.com/RamiManaf/Sofof.git</connection>
         <developerConnection>scm:git:git@github.com:RamiManaf/Sofof.git</developerConnection>
         <url>https://github.com/RamiManaf/Sofof</url>
-        <tag>2.1.1</tag>
+        <tag>HEAD</tag>
     </scm>
     <profiles>
         <!-- GPG Signature on release -->
