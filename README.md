@@ -23,7 +23,7 @@ public class Binding {
 to start use sofof database you can download it from  [here](https://github.com/RamiManaf/Sofof/releases/) and read the [documentation](https://github.com/RamiManaf/Sofof/wiki/Getting_Started_en)
 ```xml
 <dependency>
-  <groupId>org.sofof</groupId>
+  <groupId>io.github.ramimanaf</groupId>
   <artifactId>sofof</artifactId>
   <version>2.1.1</version>
 </dependency>
