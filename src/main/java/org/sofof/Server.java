@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocketFactory;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 /**
  * <h3>خادم قاعدة البيانات</h3>
@@ -269,26 +273,28 @@ public class Server extends Thread {
             return;
         }
         try {
-            org.jdom2.Element root = new org.jdom2.input.SAXBuilder().build(getClass().getResource("/sofof.xml")).getRootElement();
-            org.jdom2.Namespace namespace = org.jdom2.Namespace.getNamespace("http://sofof.org/xsd");
-            org.jdom2.Element server = root.getChild("server", namespace);
-            this.db = new File(server.getChild("database", namespace).getAttributeValue("path"), server.getChild("database", namespace).getAttributeValue("name"));
+            Element root = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(getClass().getResourceAsStream("/sofof.xml")).getDocumentElement();
+            Element server = (Element) root.getElementsByTagName("server").item(0);
+            this.db = new File(((Element) server.getElementsByTagName("database").item(0)).getAttribute("path"), ((Element) server.getElementsByTagName("database").item(0)).getAttribute("name"));
             Database.createDatabase(this.db);
-            port = server.getAttributeValue("port") == null ? -1 : Integer.parseInt(server.getAttributeValue("port"));
+            port = server.getAttribute("port") == null ? -1 : Integer.parseInt(server.getAttribute("port"));
             if (port != -1) {
-                this.ssl = Boolean.valueOf(server.getAttributeValue("ssl", "false"));
-                if (server.getChild("users", namespace) != null) {
-                    org.jdom2.Element usersEl = server.getChild("users", namespace);
-                    for (org.jdom2.Element userEl : usersEl.getChildren("user", namespace)) {
-                        User u = new User(userEl.getAttributeValue("name"), userEl.getAttributeValue("password"));
+                this.ssl = server.getAttribute("ssl").isEmpty() ? false : Boolean.valueOf(server.getAttribute("ssl"));
+                if (server.getElementsByTagName("users").getLength() != 0) {
+                    Element usersEl = (Element) server.getElementsByTagName("users").item(0);
+                    for (int i = 0; i < usersEl.getElementsByTagName("user").getLength(); i++) {
+                        Element userEl = (Element) usersEl.getElementsByTagName("user").item(i);
+                        User u = new User(userEl.getAttribute("name"), userEl.getAttribute("password"));
                         users.add(u);
                     }
                 }
             }
         } catch (IOException ex) {
             throw new SofofException("unable to read sofof.xml", ex);
-        } catch (org.jdom2.JDOMException ex) {
+        } catch (SAXException ex) {
             throw new SofofException("can not parse to sofof.xml", ex);
+        } catch (ParserConfigurationException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

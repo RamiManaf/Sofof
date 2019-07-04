@@ -11,10 +11,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
-import org.jdom2.Element;
-import org.jdom2.JDOMException;
-import org.jdom2.Namespace;
-import org.jdom2.input.SAXBuilder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * قاعدة بيانات
@@ -126,19 +129,22 @@ public class Database {
      */
     public static void configure() throws SofofException {
         if (Database.class.getResource("/sofof.xml") != null) {
-            Namespace namespace = Namespace.getNamespace("http://sofof.org/xsd");
             try {
-                Element sessionsEl = new SAXBuilder().build(Database.class.getResource("/sofof.xml")).getRootElement().getChild("sessions", namespace);
-                if (sessionsEl != null) {
-                    for (Element session : sessionsEl.getChildren("session", namespace)) {
-                        Element user = session.getChild("user", namespace);
-                        sessions.put(session.getAttributeValue("name"), new Database(session.getAttributeValue("host", "localhost"), Integer.valueOf(session.getAttributeValue("port"))).startSession(new User(user.getAttributeValue("name"), user.getAttributeValue("password")), Boolean.valueOf(session.getAttributeValue("ssl", "false"))));
+                NodeList nodes = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(Database.class.getResourceAsStream("/sofof.xml")).getDocumentElement().getElementsByTagName("sessions");
+                if (nodes.getLength() != 0) {
+                    Element sessionsEl = (Element) nodes.item(0);
+                    for (int i = 0; i < sessionsEl.getElementsByTagName("session").getLength(); i++) {
+                        Element session = (Element) sessionsEl.getElementsByTagName("session").item(i);
+                        Element user = (Element) session.getElementsByTagName("user").item(0);
+                        sessions.put(session.getAttribute("name"), new Database(session.getAttribute("host").isEmpty() ? "localhost" : session.getAttribute("host"), Integer.valueOf(session.getAttribute("port"))).startSession(new User(user.getAttribute("name"), user.getAttribute("password")), session.getAttribute("ssl").isEmpty() ? false : Boolean.valueOf(session.getAttribute("ssl"))));
                     }
                 }
             } catch (IOException ex) {
                 throw new SofofException("unable to read sofof.xml", ex);
-            } catch (JDOMException ex) {
+            } catch (SAXException ex) {
                 throw new SofofException("can not parse to sofof.xml", ex);
+            } catch (ParserConfigurationException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
