@@ -32,8 +32,6 @@ public class DefaultListInputStream implements ListInputStream {
      * @param db مجلد قاعدة البيانات
      * @param bindTree شجرة أسماء الربط
      * @param serializer
-     * @see DefaultListOutputStream#DefaultListOutputStream(java.io.File,
-     * org.sofof.BindTree)
      */
     public DefaultListInputStream(File db, BindTree bindTree, Serializer serializer) {
         this.db = db;

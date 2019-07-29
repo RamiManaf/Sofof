@@ -32,7 +32,6 @@ import org.sofof.serializer.Serializer;
  * </pre></blockquote>
  *
  * @author Rami Manaf Abdullah
- * @see Database
  */
 public class Session implements AutoCloseable {
 
