@@ -5,6 +5,9 @@
  */
 package org.sofof;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -50,6 +53,18 @@ public class ID implements Serializable{
 
     public void setId(int id) {
         this.id = id;
+    }
+    
+    private void writeObject(ObjectOutputStream out) throws IOException{
+        out.writeUTF(bind);
+        out.writeObject(clazz);
+        out.writeInt(id);
+    }
+    
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException{
+        bind = in.readUTF();
+        clazz = (Class) in.readObject();
+        id = in.readInt();
     }
 
     @Override

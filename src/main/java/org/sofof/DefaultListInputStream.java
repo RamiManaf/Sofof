@@ -6,16 +6,13 @@
 package org.sofof;
 
 import org.sofof.BindTree.BindClass;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectStreamClass;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.LinkedList;
+import org.sofof.serializer.Serializer;
 
 /**
  * قارئ القوائم
@@ -27,91 +24,64 @@ public class DefaultListInputStream implements ListInputStream {
 
     private File db;
     private BindTree bindTree;
-    private ClassLoader classLoader;
+    private Serializer serializer;
 
     /**
      * إعداد قارئ القوائم من قاعدة البيانات
      *
      * @param db مجلد قاعدة البيانات
      * @param bindTree شجرة أسماء الربط
+     * @param serializer
      * @see DefaultListOutputStream#DefaultListOutputStream(java.io.File,
      * org.sofof.BindTree)
      */
-    public DefaultListInputStream(File db, BindTree bindTree) {
+    public DefaultListInputStream(File db, BindTree bindTree, Serializer serializer) {
         this.db = db;
         this.bindTree = bindTree;
-    }
-
-    /**
-     * إعداد قارئ القوائم من قاعدة البيانات
-     *
-     * @param db مجلد قاعدة البيانات
-     * @param bindTree شجرة أسماء الربط
-     * @param loader محمل الصفوف الذي سيستخدم لتحميل الصفوف
-     * @see DefaultListOutputStream#DefaultListOutputStream(java.io.File,
-     * org.sofof.BindTree)
-     */
-    public DefaultListInputStream(File db, BindTree bindTree, ClassLoader loader) {
-        this(db, bindTree);
-        this.classLoader = loader;
+        this.serializer = serializer;
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public LinkedList read(String bind, Class c) throws SofofException {
-        if (Database.isNoName(bind)) {
+    public LinkedList read(String bind, Class c) throws SofofException{
+        return read(bind, c, null);
+    }
+    private LinkedList read(String bind, Class c, LinkedList sharedReferances) throws SofofException {
+        if (bind == null || bind.isEmpty()) {
             bind = "SofofNoName";
         }
         BindClass bc = bindTree.getBind(bind).getBindClass(c);
-        bc.tryLockRead();
         File file = bc.getStorageFile();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] serializedData = new byte[0];
         if (file != null) {
             try {
-                baos.write(Files.readAllBytes(file.toPath()));
+                bc.tryLockRead();
+                serializedData = Files.readAllBytes(file.toPath());
             } catch (IOException ex) {
+                throw new SofofException("unable to read data from server files", ex);
+            } finally {
                 bc.unlockRead();
-                throw new SofofException("an IOException thrown when trying to read", ex);
             }
         }
-        bc.unlockRead();
         LinkedList list;
-        if (baos.toByteArray().length == 0) {
+        if (serializedData.length == 0) {
             list = new LinkedList();
         } else {
-            try (ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray())) {
-                try {
-                    ObjectInputStream ois = new ObjectInputStream(bais) {
-                        @Override
-                        protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-                            if (classLoader != null) {
-                                try {
-                                    return Class.forName(desc.getName(), false, classLoader);
-                                } catch (ClassNotFoundException ex) {
-                                    return super.resolveClass(desc);
-                                }
-                            } else {
-                                return super.resolveClass(desc); //To change body of generated methods, choose Tools | Templates.
-                            }
-                        }
-                    };
-                    list = (LinkedList) ois.readObject();
-                } catch (ClassNotFoundException ex) {
-                    throw new SofofException("the class read is not found in the classpath");
-                }
-            } catch (IOException ex) {
-                throw new SofofException(ex);
+            try {
+                list = (LinkedList) serializer.deserialize(serializedData);
+            } catch (ClassNotFoundException ex) {
+                throw new SofofException("the class read is not found in the classpath");
             }
         }
         for (Object object : list) {
-            reloadBrunches(object, null);
+            reloadBranches(object, sharedReferances);
         }
         return list;
     }
 
-    private void reloadBrunches(Object object, LinkedList sharedReferances) throws SofofException {
+    private void reloadBranches(Object object, LinkedList sharedReferances) throws SofofException {
         if (object == null) {
             return;
         }
@@ -131,37 +101,30 @@ public class DefaultListInputStream implements ListInputStream {
         if (object.getClass().isArray()) {
             for (int x = 0; x < Array.getLength(object); x++) {
                 if (getBaseID(Array.get(object, x)) != null) {
-                    Object reloaded = reloadObject(Array.get(object, x));
+                    Object reloaded = getObjectByID(getBaseID(Array.get(object, x)));
                     sharedReferances.add(reloaded);
                     Array.set(object, x, reloaded);
                 } else {
-                    reloadBrunches(Array.get(object, x), sharedReferances);
+                    reloadBranches(Array.get(object, x), sharedReferances);
                 }
             }
         } else {
             for (Field field : object.getClass().getDeclaredFields()) {
                 try {
                     field.setAccessible(true);
-                    Object brunch = field.get(object);
-                    if (getBaseID(brunch) != null) {
-                        Object reloaded = reloadObject(field.get(object));
+                    Object branch = field.get(object);
+                    ID id = getBaseID(branch);
+                    if (id != null) {
+                        Object reloaded = getObjectByID(id);
                         sharedReferances.add(reloaded);
                         field.set(object, reloaded);
                     } else {
-                        reloadBrunches(brunch, sharedReferances);
+                        reloadBranches(branch, sharedReferances);
                     }
                 } catch (IllegalArgumentException | IllegalAccessException ex) {
                     throw new SofofException(ex);
                 }
             }
-        }
-    }
-
-    private Object reloadObject(Object object) throws SofofException {
-        if (getBaseID(object) == null) {
-            return object;
-        } else {
-            return getMatch(getBaseID(object));
         }
     }
 
@@ -182,7 +145,7 @@ public class DefaultListInputStream implements ListInputStream {
         return null;
     }
 
-    private Object getMatch(ID id) throws SofofException {
+    private Object getObjectByID(ID id) throws SofofException {
         LinkedList matches = read(id.getBind(), id.getClazz());
         for (Object match : matches) {
             if (getBaseID(match).equals(id)) {

@@ -6,14 +6,13 @@
 package org.sofof;
 
 import org.sofof.BindTree.BindClass;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
+import org.sofof.serializer.Serializer;
 
 /**
  * كاتب القوائم
@@ -25,6 +24,7 @@ public class DefaultListOutputStream implements ListOutputStream {
 
     private File db;
     private BindTree bindTree;
+    private Serializer serializer;
     private boolean transaction;
     private LinkedList<File> tempFiles;
 
@@ -33,12 +33,12 @@ public class DefaultListOutputStream implements ListOutputStream {
      *
      * @param db مجلد قاعدة البيانات
      * @param bindTree شجرة أسماء الربط
-     * @see DefaultListInputStream#DefaultListInputStream(java.io.File,
-     * org.sofof.BindTree)
+     * @param serializer
      */
-    public DefaultListOutputStream(File db, BindTree bindTree) {
+    public DefaultListOutputStream(File db, BindTree bindTree, Serializer serializer) {
         this.db = db;
         this.bindTree = bindTree;
+        this.serializer = serializer;
         tempFiles = new LinkedList<>();
     }
 
@@ -46,8 +46,8 @@ public class DefaultListOutputStream implements ListOutputStream {
      * {@inheritDoc}
      */
     @Override
-    public List<Object> write(List<Object> objects, String bind, Class clazz) throws SofofException {
-        if (Database.isNoName(bind)) {
+    public List write(List objects, String bind, Class clazz) throws SofofException {
+        if (bind == null || bind.trim().isEmpty()) {
             bind = "SofofNoName";
         }
         Field[] fields = clazz.getDeclaredFields();
@@ -107,14 +107,9 @@ public class DefaultListOutputStream implements ListOutputStream {
                 throw new SofofException("couldn't create a new file", ex);
             }
         }
-        try (
-                ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(byteOutputStream)) {
-            oos.writeObject(objects);
-            byte[] bytes = byteOutputStream.toByteArray();
+        try {
             try (FileOutputStream fos = new FileOutputStream(newStorage, false)) {
-                fos.write(bytes, 0, bytes.length);
-                fos.flush();
+                fos.write(serializer.serialize(objects));
             }
             if (temp != null && !transaction) {
                 temp.delete();

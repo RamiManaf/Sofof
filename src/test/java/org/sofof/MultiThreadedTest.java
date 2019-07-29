@@ -5,7 +5,8 @@
  */
 package org.sofof;
 
-import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import org.sofof.bean.Student;
 import org.sofof.command.Bind;
 import org.sofof.command.Select;
@@ -28,26 +29,19 @@ import org.junit.Test;
  */
 public class MultiThreadedTest {
 
-    private static Database db;
     private static Server server;
     private static CountDownLatch latch;
     private static final int BIND_COUNT = 100;
 
     @BeforeClass
-    public static void setUpClass() throws SofofException, InterruptedException {
-        Database.createDatabase(new File("test-db"));
+    public static void setUpClass() throws SofofException {
         latch = new CountDownLatch(BIND_COUNT);
-        server = new Server(new File("test-db"), 6969, false);
-        server.configure();
-        server.getUsers().add(new User("Rami", "password"));
-        server.startUp();
-        db = new Database("localhost", 6969);
+        server = new Server().configure().startUp();
     }
 
     @AfterClass
-    public static void tearDownClass() throws SofofException, InterruptedException {
+    public static void tearDownClass() throws SofofException {
         server.shutdown();
-        Thread.sleep(2000);
     }
 
     @Before
@@ -59,8 +53,8 @@ public class MultiThreadedTest {
     }
 
     @Test
-    public void test() throws InterruptedException, SofofException {
-        try (Session sess = db.startSession(new User("Rami", "password"))) {
+    public void test() throws InterruptedException, SofofException, FileNotFoundException, IOException, ClassNotFoundException {
+        try (Session sess = SessionManager.startSession("java:localhost:6969", new User("Rami", "password"))) {
             sess.execute(new Unbind(Student.class).from("students"));
             for (int x = 0; x < BIND_COUNT; x++) {
                 new Client().start();
@@ -76,13 +70,13 @@ public class MultiThreadedTest {
         @Override
         public void run() {
             try {
-                try (Session session = db.startSession(new User("Rami", "password"))) {
-                    Student stu = new Student("rami", 16, "sy");
-                    session.execute(new Bind(stu).to("students"));
+                try (Session session = SessionManager.startSession("java:localhost:6969", new User("Rami", "password"))) {
+                    Student student = new Student("rami", 16, "sy");
+                    session.execute(new Bind(student).to("students"));
                     session.query(new Select(Student.class).from("students"));
                 }
             } catch (SofofException ex) {
-                Logger.getLogger(MultiThreadedTest.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(MultiThreadedTest.class.getName()).log(Level.SEVERE, "", ex);
             }
             latch.countDown();
         }

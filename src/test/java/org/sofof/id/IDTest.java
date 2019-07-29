@@ -5,7 +5,6 @@
  */
 package org.sofof.id;
 
-import org.sofof.Database;
 import org.sofof.Server;
 import org.sofof.Session;
 import org.sofof.SofofException;
@@ -20,6 +19,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import org.sofof.SessionManager;
 
 /**
  *
@@ -35,10 +35,9 @@ public class IDTest {
     
     @BeforeClass
     public static void setUpClass() throws SofofException {
-        Database.createDatabase(new File("test-db"));
         server = new Server().configure().startUp();
-        Database.configure();
-        session = Database.getSession("test");
+        SessionManager.configure();
+        session = SessionManager.getSession("test");
     }
     
     @AfterClass

@@ -26,7 +26,6 @@ import org.junit.Test;
  */
 public class SessionTest {
 
-    static Database db;
     static Server server;
     static Session session;
 
@@ -34,13 +33,13 @@ public class SessionTest {
     }
 
     @BeforeClass
-    public static void setUpClass() throws SofofException {
-        Database.createDatabase(new File("test-db"));
+    public static void setUpClass() throws SofofException, InterruptedException {
+        Thread.sleep(1000);
         server = new Server(new File("test-db"), 6969, false);
+        server.createDatabase();
         User admin = new User("Rami", "secret");
         server.getUsers().add(admin);
         server.startUp();
-        db = new Database("localhost", 6969);
     }
 
     @AfterClass
@@ -64,7 +63,7 @@ public class SessionTest {
      */
     @Test
     public void testRegisteredUserStartSession() throws Exception {
-        session = db.startSession(new User("Rami", "secret"));
+        session = SessionManager.startSession("java:localhost:6969", new User("Rami", "secret"));
     }
 
     /**
@@ -72,12 +71,12 @@ public class SessionTest {
      */
     @Test(expected = SofofException.class)
     public void testUnRegisteredUserStartSession() throws Exception {
-        session = db.startSession(new User("malik", "moaze"));
+        session = SessionManager.startSession("java:localhost:6969", new User("malik", "moaze"));
     }
 
     @Test
     public void testExecuting() throws SofofException, IOException {
-        session = db.startSession(new User("Rami", "secret"));
+        session = SessionManager.startSession("java:localhost:6969", new User("Rami", "secret"));
         Student stu = new Student("Rami", 16, "syrian");
         session.execute(new Unbind(Student.class));
         session.execute(new Bind(stu));
@@ -86,7 +85,7 @@ public class SessionTest {
 
     @Test
     public void testCapture() throws SofofException {
-        session = db.startSession(new User("Rami", "secret"));
+        session = SessionManager.startSession("java:localhost:6969", new User("Rami", "secret"));
         Game game = new Game(System.getProperty("user.name"));
         game.killEnemy();
         game.killEnemy();

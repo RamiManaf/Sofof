@@ -8,9 +8,11 @@ package org.sofof.command;
 import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
 
@@ -37,7 +39,7 @@ public class Unbind implements Executable, Serializable {
      * @param c الصفوف
      */
     public Unbind(Class... c) {
-        classes = Arrays.asList(c);
+        classes = new LinkedList<>(Arrays.asList(c));
     }
 
     /**
@@ -46,7 +48,7 @@ public class Unbind implements Executable, Serializable {
      * @param objs الكائنات
      */
     public Unbind(Object... objs) {
-        objects = new LinkedList<>(Arrays.asList(objs));
+        this(Arrays.asList(objs));
     }
 
     /**
@@ -54,9 +56,9 @@ public class Unbind implements Executable, Serializable {
      * @param objs
      */
     public Unbind(List objs) {
-        objects = objs;
+        objects = new LinkedList<>(objs);
     }
-
+    
     /**
      * يحدد اسم الربط الذي سيتم إلغاء ربط الكائنات به إذا لم يتم تحديد اسم الربط
      * أو تم تمرير اللا قيمة أو تم تمرير نص يتكون من فراغات فقط سيتم إلغاء ربط
@@ -86,8 +88,8 @@ public class Unbind implements Executable, Serializable {
         int affected = 0;
         if (classes != null) {
             for (Class clazz : classes) {
-                LinkedList list = in.read(bind, clazz);
-                for (Object element : (List) list.clone()) {
+                List list = in.read(bind, clazz);
+                for (Object element : new ArrayList(list)) {
                     if (condition == null || condition.check(element)) {
                         list.remove(element);
                         affected++;
@@ -102,7 +104,7 @@ public class Unbind implements Executable, Serializable {
             List list = in.read(bind, objects.get(0).getClass());
             for (Object obj : objects) {
                 for (Object listObj : list) {
-                    if (listObj.equals(obj)) {
+                    if (Objects.equals(obj, listObj)) {
                         list.remove(listObj);
                         affected++;
                     }

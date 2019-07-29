@@ -5,9 +5,9 @@
     <description>
         a database for storing classes in an easy and fast way.
     </description>
-    <groupId>org.sofof</groupId>
+    <groupId>io.github.ramimanaf</groupId>
     <artifactId>sofof</artifactId>
-    <version>2.1.1-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <url>https://github.com/RamiManaf/Sofof</url>
     <properties>
@@ -21,11 +21,6 @@
             <groupId>junit</groupId>
             <version>4.12</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jdom</groupId>
-            <artifactId>jdom2</artifactId>
-            <version>2.0.6</version>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -52,7 +47,7 @@
     </licenses>
     <build>
         <plugins>
-            <plugin>
+<!--            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.0.0</version>
@@ -67,7 +62,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -168,7 +163,7 @@
         <connection>scm:git:git://github.com/RamiManaf/Sofof.git</connection>
         <developerConnection>scm:git:git@github.com:RamiManaf/Sofof.git</developerConnection>
         <url>https://github.com/RamiManaf/Sofof</url>
-        <tag>HEAD</tag>
+        <tag>3.0.0</tag>
     </scm>
     <profiles>
         <!-- GPG Signature on release -->

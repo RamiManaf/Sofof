@@ -12,7 +12,6 @@ import org.sofof.command.Unbind;
 import org.sofof.command.Update;
 import org.sofof.command.condition.ObjectCondition;
 import org.sofof.permission.User;
-import java.io.File;
 import java.util.List;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -28,7 +27,6 @@ import org.junit.Test;
 public class CommandsTest {
 
     private static Session session;
-    private static Database db;
     private static Server s;
 
     public CommandsTest() {
@@ -36,13 +34,12 @@ public class CommandsTest {
 
     @BeforeClass
     public static void setUpClass() throws SofofException {
-        Database.createDatabase(new File("test-db"));
         User admin = new User("Rami", "password");
         s = new Server().configure();
         s.getUsers().add(admin);
         s.startUp();
-        db = new Database("localhost", 6969);
-        session = db.startSession(admin);
+        SessionManager.configure();
+        session = SessionManager.getSession("test");
     }
 
     @AfterClass

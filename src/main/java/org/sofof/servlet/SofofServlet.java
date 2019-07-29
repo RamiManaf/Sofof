@@ -5,13 +5,13 @@
  */
 package org.sofof.servlet;
 
-import org.sofof.Database;
 import org.sofof.Server;
 import org.sofof.SofofException;
 import java.io.File;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
+import org.sofof.SessionManager;
 
 /**
  * <h3>مشغل الخادم</h3>
@@ -52,7 +52,7 @@ import javax.servlet.http.HttpServlet;
  */
 public class SofofServlet extends HttpServlet {
 
-    private Server server;
+    private static Server server;
 
     /**
      * <p>
@@ -74,11 +74,15 @@ public class SofofServlet extends HttpServlet {
             }
             server.startUp();
             if (config.getInitParameter("configureSession") != null && config.getInitParameter("configureSession").equalsIgnoreCase("true")) {
-                Database.configure();
+                SessionManager.configure();
             }
         } catch (SofofException ex) {
             throw new ServletException(ex);
         }
+    }
+
+    public static Server getServer() {
+        return server;
     }
 
     /**

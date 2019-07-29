@@ -29,7 +29,7 @@ public class Bind implements Executable, Query, Serializable {
 
     private String bind;
     private List<Object> objects;
-
+    
     /**
      * يقوم بربط الكائنات باسم ربط وتخزينهم
      *
@@ -38,7 +38,7 @@ public class Bind implements Executable, Query, Serializable {
     public Bind(Object... obj) {
         this.objects = new LinkedList<>(Arrays.asList(obj));
     }
-
+    
     /**
      * يقوم بربط الطائنات باسم ربط وتخزينهم
      *
@@ -75,7 +75,7 @@ public class Bind implements Executable, Query, Serializable {
     @Override
     public List query(ListInputStream in) throws SofofException {
         if(objects.isEmpty())throw new SofofException("no objects to be recovered");
-        LinkedList recovered = in.read(bind, objects.get(0).getClass());
+        List recovered = in.read(bind, objects.get(0).getClass());
         LinkedList matches = new LinkedList();
         objects.forEach((object) -> {
             if(recovered.contains(object))matches.add(recovered.get(recovered.indexOf(object)));

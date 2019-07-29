@@ -9,6 +9,7 @@ import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Objects;
 import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
 
@@ -95,7 +96,7 @@ public class Update implements Executable, Serializable {
         } else {
             List list = in.read(bind, object.getClass());
             for (int x = 0; x < list.size(); x++) {
-                if (list.get(x).equals(object)) {
+                if (Objects.equals(list.get(x), object)) {
                     list.set(x, update);
                     affected++;
                 }

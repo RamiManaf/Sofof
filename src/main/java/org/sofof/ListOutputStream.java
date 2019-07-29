@@ -27,7 +27,7 @@ public interface ListOutputStream {
      * @return تعيد الصفوف بعد توليد معرف لها
      * @throws org.sofof.SofofException
      */
-    public List<Object> write(List<Object> objects, String bind, Class clazz) throws SofofException;
+    public List write(List objects, String bind, Class clazz) throws SofofException;
 
     /**
      * تقوم ببدء نقلة

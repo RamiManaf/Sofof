@@ -5,7 +5,7 @@
  */
 package org.sofof;
 
-import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -27,6 +27,6 @@ public interface ListInputStream {
      * فارغة
      * @throws SofofException
      */
-    public LinkedList read(String bind, Class c) throws SofofException;
+    public List read(String bind, Class c) throws SofofException;
 
 }

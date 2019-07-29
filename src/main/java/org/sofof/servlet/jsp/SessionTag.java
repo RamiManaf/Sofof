@@ -5,7 +5,6 @@
  */
 package org.sofof.servlet.jsp;
 
-import org.sofof.Database;
 import org.sofof.Session;
 import org.sofof.SofofException;
 import org.sofof.permission.User;
@@ -13,6 +12,7 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspTagException;
 import javax.servlet.jsp.tagext.Tag;
 import javax.servlet.jsp.tagext.TagSupport;
+import org.sofof.SessionManager;
 
 /**
  *
@@ -21,22 +21,22 @@ import javax.servlet.jsp.tagext.TagSupport;
 public class SessionTag extends TagSupport {
 
     private Session session;
-    private String host;
-    private Integer port;
+    private String url;
     private String username;
     private String password;
+    private boolean ssl;
     private String name;
 
     public Session getSession() {
         return session;
     }
 
-    public void setHost(String host) {
-        this.host = host;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
-    public void setPort(Integer port) {
-        this.port = port;
+    public void setSsl(boolean ssl) {
+        this.ssl = ssl;
     }
 
     public void setUsername(String username) {
@@ -55,9 +55,9 @@ public class SessionTag extends TagSupport {
     public int doStartTag() throws JspException {
         try {
             if (name != null) {
-                session = Database.getSession(name);
+                session = SessionManager.getSession(name);
             } else {
-                session = new Database(host, port).startSession(new User(username, password));
+                session = SessionManager.startSession(url, new User(username, password), ssl);
             }
         } catch (SofofException ex) {
             throw new JspException(ex);

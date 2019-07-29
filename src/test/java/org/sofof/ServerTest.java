@@ -20,7 +20,6 @@ import org.junit.Test;
  */
 public class ServerTest {
     
-    private static Database db;
     private static Session session;
     private static Server server;
     
@@ -29,9 +28,7 @@ public class ServerTest {
     
     @BeforeClass
     public static void setUpClass() throws SofofException {
-        Database.createDatabase(new File("test-db"));
         server = new Server().configure().startUp();
-        db = new Database("localhost", 6969);
     }
     
     @AfterClass
@@ -50,13 +47,13 @@ public class ServerTest {
     
     @Test
     public void testLoadXML1() throws SofofException{
-        session = db.startSession(new User("Rami", "password"));
+        session = SessionManager.startSession("java:localhost:6969", new User("Rami", "password"));
         session.execute(new Unbind(TestClass.class));
     }
     
     @Test(expected = SofofException.class)
     public void testLoadXML4() throws SofofException{
-        session = db.startSession(new User("user3", "password"));
+        session = SessionManager.startSession("java:localhost:6969", new User("user3", "password"));
         session.execute(new Unbind(TestClass.class));
     }
 

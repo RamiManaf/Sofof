@@ -5,7 +5,11 @@
  */
 package org.sofof.permission;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  *<h3>المستخدم</h3>
@@ -45,6 +49,16 @@ public class User implements Serializable{
     public String getName() {
         return name;
     }
+    
+    private void writeObject(ObjectOutputStream out) throws IOException{
+        out.writeUTF(name);
+        out.writeUTF(password);
+    }
+    
+    private void readObject(ObjectInputStream in) throws IOException{
+        name = in.readUTF();
+        password = in.readUTF();
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -54,6 +68,14 @@ public class User implements Serializable{
         if(!user.name.equals(name))return false;
         if(!user.password.equals(password))return false;
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 23 * hash + Objects.hashCode(this.name);
+        hash = 23 * hash + Objects.hashCode(this.password);
+        return hash;
     }
     
 }

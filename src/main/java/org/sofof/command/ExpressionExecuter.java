@@ -105,13 +105,13 @@ import java.util.regex.Pattern;
  */
 public class ExpressionExecuter {
 
-    private static final Pattern DIGIT = Pattern.compile("[\\d]*[.]?[\\d]+");
     private static final Pattern DECIMAL_POINT = Pattern.compile("[\\d]*[.]{1}[\\d]+");
     private static final Pattern METHOD = Pattern.compile("([a-zA-Z0-9_$]+)*\\(.*\\)(\\[\\d\\])?");
     private static final Pattern FIELD = Pattern.compile("([a-zA-Z0-9_$]+)*(\\[\\d\\])?");
 
     public static Object execute(String expression, Object obj) throws SofofException {
         //expression starter
+        if(expression == null)return null;
         if (!expression.startsWith("#")) {
             throw new SofofException("not a valide expression. # misseds");
         }

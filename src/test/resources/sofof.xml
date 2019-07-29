@@ -9,15 +9,17 @@ and open the template in the editor.
 <sofof
     xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
     xmlns='http://sofof.org/xsd'>
-    <server port="6969">
-        <database name="test-db"/>
+    <server port="6969" database="test-db">
         <users>
-            <user admin="true" name="Rami" password="password"/>
-            <user admin="false" name="user2" password="password"/>
+            <user name="Rami" password="password"/>
+            <user name="user2" password="password"/>
         </users>
+        <clients>
+            <client>127.0.0.1</client>
+        </clients>
     </server>
     <sessions>
-        <session name="test" port="6969">
+        <session name="test" url="java:localhost:6969">
             <user name="Rami" password="password"/>
         </session>
     </sessions>

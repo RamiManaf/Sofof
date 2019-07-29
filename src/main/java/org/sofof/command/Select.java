@@ -9,7 +9,7 @@ import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import org.sofof.command.sorter.Sorter;
 import java.io.Serializable;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -107,10 +107,10 @@ public class Select implements Query, Serializable {
 
     @Override
     public List query(ListInputStream in) throws SofofException {
-        LinkedList objs = in.read(bind, clazz);
+        List objs = in.read(bind, clazz);
         if(shuffle)Collections.shuffle(objs);
         if (condition != null) {
-            for (Object obj : (List) objs.clone()) {
+            for (Object obj : new ArrayList(objs)) {
                 if (!condition.check(obj)) {
                     objs.remove(obj);
                 }

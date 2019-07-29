@@ -3,7 +3,6 @@ package org.sofof;
 
 import org.sofof.Session;
 import org.sofof.Server;
-import org.sofof.Database;
 import org.sofof.SofofException;
 import org.sofof.bean.Student;
 import org.sofof.command.Bind;
@@ -41,9 +40,9 @@ public class StudentsTest extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Server server = new Server().configure();
-        Database.configure();
-        Session session = Database.getSession("test");
+        Server server = new Server().configure().startUp();
+        SessionManager.configure();
+        Session session = SessionManager.getSession("test");
         table = new TableView(FXCollections.observableList(session.query(new Select(Student.class).from("students"))));
         table.setPrefSize(400, 600);
         table.setEditable(true);

@@ -7,14 +7,14 @@
         <name>session</name>
         <tag-class>org.sofof.servlet.jsp.SessionTag</tag-class>
         <attribute>
-            <name>host</name>
+            <name>url</name>
             <rtexprvalue>true</rtexprvalue>
             <type>java.lang.String</type>
         </attribute>
         <attribute>
-            <name>port</name>
+            <name>ssk</name>
             <rtexprvalue>true</rtexprvalue>
-            <type>java.lang.Integer</type>
+            <type>java.lang.Boolean</type>
         </attribute>
         <attribute>
             <name>username</name>

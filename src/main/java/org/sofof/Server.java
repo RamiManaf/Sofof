@@ -11,21 +11,21 @@ import org.sofof.permission.SofofSecurityManager;
 import org.sofof.permission.User;
 import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.ObjectStreamClass;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import org.sofof.serializer.JavaSerializer;
+import org.sofof.serializer.Serializer;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
@@ -60,17 +60,21 @@ public class Server extends Thread {
     private File db;
     private int port;
     private boolean ssl;
+    private Serializer serializer;
     private ServerSocket socket;
     private volatile BindTree bindTree;
     private List<User> users;
-    private ClassLoader classLoader;
+    private List<String> clients;
 
     /**
      * تنشئ كائن الخادم
      */
     public Server() {
-        this.port = -1;
-        users = new ArrayList<>();
+        this(null);
+    }
+    
+    public Server(File db) {
+        this(db, -1, false);
     }
 
     /**
@@ -81,10 +85,7 @@ public class Server extends Thread {
      * @param ssl استخدام طبقة المقابس الآمنة
      */
     public Server(File db, int port, boolean ssl) {
-        this();
-        this.db = db;
-        this.port = port;
-        this.ssl = ssl;
+        this(db, port, ssl, new ArrayList<>());
     }
 
     /**
@@ -96,40 +97,35 @@ public class Server extends Thread {
      * @param users قائمة بالمستخدمين
      */
     public Server(File db, int port, boolean ssl, List<User> users) {
-        this(db, port, ssl);
-        this.users.addAll(users);
+        this.db = db;
+        this.port = port;
+        this.ssl = ssl;
+        this.users = new ArrayList<>(Objects.requireNonNull(users));
+        serializer = new JavaSerializer();
     }
 
-    /**
-     * ينشئ كائن الخادم
-     *
-     * @param db مجلد قاعدة البيانات
-     * @param port المنفذ الذي سيستمع الخادم إليه
-     * @param ssl استخدام طبقة المقابس الآمنة
-     * @param users قائمة بالمستخدمين
-     * @param loader محمل الصفوف الذي سيستخدم لتحميل الصفوف
-     */
-    public Server(File db, int port, boolean ssl, List<User> users, ClassLoader loader) {
-        this(db, port, ssl);
-        this.users.addAll(users);
-        this.classLoader = loader;
+    public Serializer getSerializer() {
+        return serializer;
+    }
+    
+    public List<User> getUsers() {
+        return users;
     }
 
-    /**
-     *
-     * @return محمل الصفوف أو لا قيمة
-     */
-    public ClassLoader getClassLoader() {
-        return classLoader;
+    public List<String> getClients() {
+        return clients;
     }
 
-    /**
-     * تحديد محمل الصفوف
-     *
-     * @param classLoader محمل الصفوف
-     */
-    public void setClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+    public void setSerializer(Serializer serializer) {
+        this.serializer = Objects.requireNonNull(serializer);
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = Objects.requireNonNull(users);
+    }
+
+    public void setClients(List<String> clients) {
+        this.clients = clients;
     }
 
     /**
@@ -180,7 +176,11 @@ public class Server extends Thread {
         while (!socket.isClosed()) {
             try {
                 Socket client = socket.accept();
-                new Service(client).start();
+                if (clients == null || clients.contains(client.getInetAddress().getHostAddress()) || clients.contains(client.getInetAddress().getHostName())) {
+                    new Service(client).start();
+                } else {
+                    client.close();
+                }
             } catch (IOException ex) {
                 if (!socket.isClosed()) {
                     LOGGER.log(Level.SEVERE, null, ex);
@@ -191,7 +191,7 @@ public class Server extends Thread {
 
     public class Service extends Thread {
 
-        private Socket client;
+        private final Socket client;
         private User user;
         private DefaultListInputStream in;
         private DefaultListOutputStream out;
@@ -203,50 +203,42 @@ public class Server extends Thread {
 
         @Override
         public void run() {
-            try (ObjectInputStream ois = new ObjectInputStream(client.getInputStream());
-                    ObjectOutputStream oos = new ObjectOutputStream(client.getOutputStream());) {
-                user = (User) ois.readObject();
+            try {
+                user = (User) Session.readObject(client.getInputStream(), serializer);
                 if (users.contains(user)) {
                     user = users.get(users.indexOf(user));
-                    oos.writeBoolean(true);
+                    client.getOutputStream().write(Session.BOOLEAN_TRUE);
+                    client.getOutputStream().flush();
                 } else {
-                    oos.writeBoolean(false);
+                    client.getOutputStream().write(Session.BOOLEAN_FALSE);
                     return;
                 }
-                in = new DefaultListInputStream(db, bindTree, classLoader);
-                out = new DefaultListOutputStream(db, bindTree);
-                oos.flush();
+                in = new DefaultListInputStream(db, bindTree, serializer);
+                out = new DefaultListOutputStream(db, bindTree, serializer);
                 while (true) {
-                    Object type = ois.readObject();
-                    Object o = ois.readObject();
-                    if (type == null) {
+                    int type = (byte) client.getInputStream().read();
+                    if (type == -1) {
                         break;
-                    } else if (type.equals(true)) {
+                    }
+                    Object obj = Session.readObject(client.getInputStream(), serializer);
+                    if (type == Session.COMMAND_EXECUTABLE) {
                         try {
-                            checkExecutingPermission(user, (Executable) o);
+                            checkExecutingPermission(user, (Executable) obj);
                             synchronized (bindTree) {
-                                oos.writeObject(((Executable) o).execute(in, out));
+                                Session.writeObjct(client.getOutputStream(), serializer, ((Executable) obj).execute(in, out));
                             }
                         } catch (SofofException | SecurityException ex) {
-                            oos.writeObject(ex);
+                            Session.writeObjct(client.getOutputStream(), serializer, ex);
                         }
-                    } else if (type.equals(false)) {
+                    } else if (type == Session.COMMAND_QUERY) {
                         try {
-                            checkQueryingPermission(user, (Query) o);
-                            oos.writeObject(((Query) o).query(in));
+                            checkQueryingPermission(user, (Query) obj);
+                            Session.writeObjct(client.getOutputStream(), serializer, ((Query) obj).query(in));
                         } catch (SofofException | SecurityException ex) {
-                            oos.writeObject(ex);
+                            Session.writeObjct(client.getOutputStream(), serializer, ex);
                         }
                     }
                     commite();
-                    oos.flush();
-                }
-            } catch (EOFException ex) {
-            } catch (ClassNotFoundException ex) {
-                try {
-                    throw new SofofException("the recived class is not found in the classpath", ex);
-                } catch (SofofException ex1) {
-                    LOGGER.log(Level.SEVERE, null, ex);
                 }
             } catch (IOException | SofofException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
@@ -274,18 +266,25 @@ public class Server extends Thread {
         }
         try {
             Element root = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(getClass().getResourceAsStream("/sofof.xml")).getDocumentElement();
-            Element server = (Element) root.getElementsByTagName("server").item(0);
-            this.db = new File(((Element) server.getElementsByTagName("database").item(0)).getAttribute("path"), ((Element) server.getElementsByTagName("database").item(0)).getAttribute("name"));
-            Database.createDatabase(this.db);
-            port = server.getAttribute("port") == null ? -1 : Integer.parseInt(server.getAttribute("port"));
+            Element serverElement = (Element) root.getElementsByTagName("server").item(0);
+            this.db = new File(serverElement.getAttribute("database"));
+            createDatabase();
+            port = serverElement.getAttribute("port") == null ? -1 : Integer.parseInt(serverElement.getAttribute("port"));
             if (port != -1) {
-                this.ssl = server.getAttribute("ssl").isEmpty() ? false : Boolean.valueOf(server.getAttribute("ssl"));
-                if (server.getElementsByTagName("users").getLength() != 0) {
-                    Element usersEl = (Element) server.getElementsByTagName("users").item(0);
-                    for (int i = 0; i < usersEl.getElementsByTagName("user").getLength(); i++) {
-                        Element userEl = (Element) usersEl.getElementsByTagName("user").item(i);
-                        User u = new User(userEl.getAttribute("name"), userEl.getAttribute("password"));
+                this.ssl = serverElement.getAttribute("ssl").isEmpty() ? false : Boolean.valueOf(serverElement.getAttribute("ssl"));
+                if (serverElement.getElementsByTagName("users").getLength() != 0) {
+                    Element usersElement = (Element) serverElement.getElementsByTagName("users").item(0);
+                    for (int i = 0; i < usersElement.getElementsByTagName("user").getLength(); i++) {
+                        Element userElement = (Element) usersElement.getElementsByTagName("user").item(i);
+                        User u = new User(userElement.getAttribute("name"), userElement.getAttribute("password"));
                         users.add(u);
+                    }
+                }
+                if(serverElement.getElementsByTagName("clients").getLength() != 0){
+                    Element clientsElement = (Element) serverElement.getElementsByTagName("clients").item(0);
+                    clients = new ArrayList<>();
+                    for(int i=0;i<clientsElement.getElementsByTagName("client").getLength();i++){
+                        clients.add(clientsElement.getElementsByTagName("client").item(i).getTextContent());
                     }
                 }
             }
@@ -299,34 +298,13 @@ public class Server extends Thread {
     }
 
     private void readMetaData() throws SofofException {
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(new File(db, "binds"))) {
-            @Override
-            protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
-                if (classLoader != null) {
-                    try {
-                        return Class.forName(desc.getName(), false, classLoader);
-                    } catch (ClassNotFoundException ex) {
-                        return super.resolveClass(desc);
-                    }
-                } else {
-                    return super.resolveClass(desc); //To change body of generated methods, choose Tools | Templates.
-                }
-            }
-        }) {
-            bindTree = (BindTree) ois.readObject();
+        try {
+            bindTree = (BindTree) serializer.deserialize(Files.readAllBytes(new File(db, "binds").toPath()));
         } catch (IOException ex) {
             throw new SofofException("can not read meta data", ex);
         } catch (ClassNotFoundException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
         }
-    }
-
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<User> users) {
-        this.users = users;
     }
 
     /**
@@ -336,8 +314,9 @@ public class Server extends Thread {
      * @throws SofofException
      */
     private synchronized void commite() throws SofofException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(db, "binds"), false))) {
-            oos.writeObject(bindTree);
+        try (FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
+            out.write(serializer.serialize(bindTree));
+            out.flush();
         } catch (IOException ex) {
             throw new SofofException("can not save changes to meta ", ex);
         }
@@ -381,7 +360,7 @@ public class Server extends Thread {
         }
         int result;
         synchronized (bindTree) {
-            result = exe.execute(new DefaultListInputStream(db, bindTree, classLoader), new DefaultListOutputStream(db, bindTree));
+            result = exe.execute(new DefaultListInputStream(db, bindTree, serializer), new DefaultListOutputStream(db, bindTree, serializer));
         }
         commite();
         return result;
@@ -398,7 +377,37 @@ public class Server extends Thread {
         if (!internal) {
             throw new SofofException("unauthenticated query for an  external server has been blocked");
         }
-        return query.query(new DefaultListInputStream(db, bindTree, classLoader));
+        return query.query(new DefaultListInputStream(db, bindTree, serializer));
+    }
+
+    /**
+     * <p>
+     * تنشئ قاعدة بيانات, إذا كان هناك قاعدة بيانات بنفس الاسم لن يتم عمل أي
+     * شيء.</p>
+     *
+     * <p>
+     * يجب الانتباه إلى أن ملف قاعدة البيانات لا يجب أن يكون موجودا</p>
+     *
+     * @return تعيد صحيح إذا كانت قاعدة البيانات غير موجودة وخاطئ إذا كانت هناك
+     * قاعدة موجودة بنفس الاسم
+     * @throws SofofException إذا حدث أي خطأ دخل وخرج
+     */
+    public boolean createDatabase() throws SofofException {
+        if (!db.exists()) {
+            try {
+                db.mkdir();
+                File binds = new File(db, "binds");
+                binds.createNewFile();
+                try (FileOutputStream out = new FileOutputStream(binds, false)) {
+                    out.write(serializer.serialize(new BindTree()));
+                }
+            } catch (IOException ex) {
+                throw new SofofException("couldn't create database ", ex);
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

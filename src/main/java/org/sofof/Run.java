@@ -38,14 +38,14 @@ class Run {
                 switch (args[0]) {
                     case "startSession": {
                         if(args.length >1 && args[1].equals("-h")){
-                            System.out.println("pattern Host Port Username Password");
+                            System.out.println("startSession URL Username Password SSL");
                             break;
                         }
-                        String host = requestParam(1, "Host:");
-                        int port = Integer.parseInt(requestParam(2, "Port:"));
-                        String username = requestParam(3, "Username:");
-                        String password = requestParam(4, "Password:");
-                        try (Session session = new Database(host, port).startSession(new User(username, password))) {
+                        String host = requestParam(1, "URL:");
+                        String username = requestParam(2, "Username:");
+                        String password = requestParam(3, "Password:");
+                        boolean ssl = Boolean.parseBoolean(requestParam(4, "SSL:"));
+                        try (Session session = SessionManager.startSession(host, new User(username, password), ssl)) {
                             ScriptEngine engine = getEngine();
                             engine.put("session", session);
                             String token;
@@ -60,7 +60,7 @@ class Run {
 
                     case "startServer": {
                         if(args.length >1 && args[1].equals("-h")){
-                            System.out.println("pattern Database_Folder Port SSL(true,false)");
+                            System.out.println("startServer Database_Folder Port SSL(true,false)");
                             break;
                         }
                         File folder = new File(requestParam(1, "Database Folder:"));
@@ -79,13 +79,12 @@ class Run {
                     }
                     case "create": {
                         if(args.length >1 && args[1].equals("-h")){
-                            System.out.println("pattern Location Database_Name");
+                            System.out.println("create Database_Path");
                             break;
                         }
-                        String folder = requestParam(1, "Location:");
-                        String name = requestParam(2, "Database Name:");
+                        String folder = requestParam(1, "Database Path:");
                         new File(folder).mkdirs();
-                        Database.createDatabase(new File(folder, name));
+                        new Server(new File(folder), -1, false).createDatabase();
                         System.out.println("Database created successfully");
                         break;
                     }
