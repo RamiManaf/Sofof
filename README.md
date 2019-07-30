@@ -4,15 +4,17 @@ Sofof is an easy, portable, multiusers database for Java Se and EE developers
 ```java
 import org.sofof.command.Bind;
 import org.sofof.permission.User;
+import org.sofof.Server;
+import org.sofof.SessionManager;
 import java.io.File;
 
 public class Binding {
     public static void main(String[] args) throws SofofException {
-        Database.createDatabase(new File("sofof"));
         Server s = new Server(new File("sofof"), 6969, false);
+        s.createDatabase();
         s.getUsers().add(new User("rami", "secret"));
         s.startUp();
-        try (Session sess = new Database("localhost", 6969).startSession(new User("rami", "secret"), false)) {
+        try (Session sess = SessionManager.startSession("java:localhost:6969", new User("rami", "secret"), false)) {
             sess.execute(new Bind("Sofof database is great").to("posts"));
         }
     }
@@ -25,7 +27,7 @@ to start use sofof database you can download it from  [here](https://github.com/
 <dependency>
   <groupId>io.github.ramimanaf</groupId>
   <artifactId>sofof</artifactId>
-  <version>2.1.1</version>
+  <version>3.0.0</version>
 </dependency>
 ```
 ## Other languages
