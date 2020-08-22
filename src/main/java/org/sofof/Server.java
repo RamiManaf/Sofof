@@ -9,7 +9,6 @@ import org.sofof.command.Executable;
 import org.sofof.command.Query;
 import org.sofof.permission.SofofSecurityManager;
 import org.sofof.permission.User;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,6 +18,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -65,6 +66,7 @@ public class Server extends Thread {
     private volatile BindTree bindTree;
     private List<User> users;
     private List<String> clients;
+    private ReentrantReadWriteLock readWriteLock;
 
     /**
      * تنشئ كائن الخادم
@@ -72,7 +74,7 @@ public class Server extends Thread {
     public Server() {
         this(null);
     }
-    
+
     public Server(File db) {
         this(db, -1, false);
     }
@@ -102,12 +104,13 @@ public class Server extends Thread {
         this.ssl = ssl;
         this.users = new ArrayList<>(Objects.requireNonNull(users));
         serializer = new JavaSerializer();
+        readWriteLock = new ReentrantReadWriteLock(true);
     }
 
     public Serializer getSerializer() {
         return serializer;
     }
-    
+
     public List<User> getUsers() {
         return users;
     }
@@ -222,32 +225,33 @@ public class Server extends Thread {
                     }
                     Object obj = Session.readObject(client.getInputStream(), serializer);
                     if (type == Session.COMMAND_EXECUTABLE) {
+                        Lock lock = readWriteLock.writeLock();
                         try {
+                            lock.lock();
                             checkExecutingPermission(user, (Executable) obj);
-                            synchronized (bindTree) {
-                                Session.writeObjct(client.getOutputStream(), serializer, ((Executable) obj).execute(in, out));
-                            }
+                            Session.writeObjct(client.getOutputStream(), serializer, ((Executable) obj).execute(in, out));
                         } catch (SofofException | SecurityException ex) {
                             Session.writeObjct(client.getOutputStream(), serializer, ex);
+                        } finally {
+                            lock.unlock();
                         }
+                        commite();
                     } else if (type == Session.COMMAND_QUERY) {
+                        Lock lock = readWriteLock.readLock();
                         try {
+                            lock.lock();
                             checkQueryingPermission(user, (Query) obj);
                             Session.writeObjct(client.getOutputStream(), serializer, ((Query) obj).query(in));
                         } catch (SofofException | SecurityException ex) {
                             Session.writeObjct(client.getOutputStream(), serializer, ex);
+                        } finally {
+                            lock.unlock();
                         }
                     }
-                    commite();
                 }
             } catch (IOException | SofofException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
             } finally {
-                try {
-                    commite();
-                } catch (SofofException ex) {
-                    LOGGER.log(Level.SEVERE, null, ex);
-                }
                 try {
                     if (!client.isClosed()) {
                         client.close();
@@ -280,10 +284,10 @@ public class Server extends Thread {
                         users.add(u);
                     }
                 }
-                if(serverElement.getElementsByTagName("clients").getLength() != 0){
+                if (serverElement.getElementsByTagName("clients").getLength() != 0) {
                     Element clientsElement = (Element) serverElement.getElementsByTagName("clients").item(0);
                     clients = new ArrayList<>();
-                    for(int i=0;i<clientsElement.getElementsByTagName("client").getLength();i++){
+                    for (int i = 0; i < clientsElement.getElementsByTagName("client").getLength(); i++) {
                         clients.add(clientsElement.getElementsByTagName("client").item(i).getTextContent());
                     }
                 }
@@ -314,7 +318,7 @@ public class Server extends Thread {
      * @throws SofofException
      */
     private synchronized void commite() throws SofofException {
-        try (FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
+        try ( FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
             out.write(serializer.serialize(bindTree));
             out.flush();
         } catch (IOException ex) {
@@ -358,9 +362,13 @@ public class Server extends Thread {
         if (!internal) {
             throw new SofofException("unauthenticated execute for an  external server has been blocked");
         }
-        int result;
-        synchronized (bindTree) {
+        Lock lock = readWriteLock.writeLock();
+        int result = 0;
+        try {
+            lock.lock();
             result = exe.execute(new DefaultListInputStream(db, bindTree, serializer), new DefaultListOutputStream(db, bindTree, serializer));
+        } finally {
+            lock.unlock();
         }
         commite();
         return result;
@@ -377,7 +385,15 @@ public class Server extends Thread {
         if (!internal) {
             throw new SofofException("unauthenticated query for an  external server has been blocked");
         }
-        return query.query(new DefaultListInputStream(db, bindTree, serializer));
+        Lock lock = readWriteLock.readLock();
+        List result;
+        try{
+            lock.lock();
+            result = query.query(new DefaultListInputStream(db, bindTree, serializer));
+        }finally{
+            lock.unlock();
+        }
+        return result;
     }
 
     /**
@@ -398,7 +414,7 @@ public class Server extends Thread {
                 db.mkdir();
                 File binds = new File(db, "binds");
                 binds.createNewFile();
-                try (FileOutputStream out = new FileOutputStream(binds, false)) {
+                try ( FileOutputStream out = new FileOutputStream(binds, false)) {
                     out.write(serializer.serialize(new BindTree()));
                 }
             } catch (IOException ex) {

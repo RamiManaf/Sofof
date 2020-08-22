@@ -10,7 +10,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public class BindTree implements Serializable {
 
     private static final long serialVersionUID = 725607124l;
 
-    private LinkedList<Bind> binds;
+    private ArrayList<Bind> binds;
 
     /**
      * <p>
@@ -33,7 +34,7 @@ public class BindTree implements Serializable {
         private static final long serialVersionUID = 7980792384l;
 
         private String name;
-        private LinkedList<BindClass> classes;
+        private ArrayList<BindClass> classes;
 
         /**
          *
@@ -41,7 +42,7 @@ public class BindTree implements Serializable {
          */
         public Bind(String name) {
             this.name = name;
-            classes = new LinkedList<>();
+            classes = new ArrayList<>();
         }
 
         /**
@@ -56,17 +57,8 @@ public class BindTree implements Serializable {
          *
          * @return الصفوف المرتبطة باسم الربط
          */
-        public synchronized List<BindClass> getClasses() {
-            return classes;
-        }
-
-        /**
-         * تحدد الصفوف المربوطة باسم الربط
-         *
-         * @param classes الصفوف
-         */
-        public synchronized void setClasses(LinkedList<BindClass> classes) {
-            this.classes = classes;
+        public List<BindClass> getClasses() {
+            return new ArrayList<>(classes);
         }
 
         /**
@@ -81,18 +73,18 @@ public class BindTree implements Serializable {
                 }
             }
             BindClass bc = new BindClass(this, c);
-            getClasses().add(bc);
+            classes.add(bc);
             return bc;
         }
 
         private void writeObject(ObjectOutputStream out) throws IOException {
             out.writeUTF(name);
-            out.writeObject(classes);
+            out.writeObject(classes.toArray(new BindClass[classes.size()]));
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             name = in.readUTF();
-            classes = (LinkedList<BindClass>) in.readObject();
+            classes = new ArrayList(Arrays.asList((BindClass[])in.readObject()));
         }
 
     }
@@ -107,9 +99,6 @@ public class BindTree implements Serializable {
         private Bind bind;
         private Class clazz;
         private File storageFile;
-        private transient Boolean readLock = false;
-        private transient int readingCount = 0;
-        private transient Boolean writeLock = false;
 
         /**
          * الصف المرتبط
@@ -155,59 +144,6 @@ public class BindTree implements Serializable {
             this.storageFile = storageFile;
         }
 
-        /**
-         * <p>
-         * تحاول امتلاك قفل القراءة, وإذا كان قفل الكتابة ممتلكا ستنتظره</p>
-         */
-        public synchronized void tryLockRead() {
-            while (writeLock) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-            readingCount+=1;
-            readLock = true;
-        }
-
-        /**
-         * <p>
-         * تحاول امتلاك قفل الكتابة, وإذا كان قفل الكتابة أو القراءة ممتلكين
-         * ستنتظرهما.</p>
-         */
-        public synchronized void tryLockWrite() {
-            while (writeLock || readLock) {
-                try {
-                    wait();
-                } catch (InterruptedException ex) {
-                }
-            }
-            writeLock = true;
-        }
-
-        /**
-         * <p>
-         * تحرر قفل القراءة, وإذا كانت كل أقفال القراءة محررة سيسمح
-         * بالكتابة.</p>
-         */
-        public synchronized void unlockRead() {
-            readingCount-=1;
-            if (readingCount == 0) {
-                readLock = false;
-                notify();
-            }
-        }
-
-        /**
-         * <p>
-         * تحرر قفل الكتابة, مما يسمح بعملية كتابة أو عمليات قراءة
-         * بالمتابعة.</p>
-         */
-        public synchronized void unlockWrite() {
-            writeLock = false;
-            notifyAll();
-        }
-
         private void writeObject(ObjectOutputStream out) throws IOException {
             out.writeObject(bind);
             out.writeObject(clazz);
@@ -218,9 +154,6 @@ public class BindTree implements Serializable {
             bind = (Bind) in.readObject();
             clazz = (Class) in.readObject();
             storageFile = (File) in.readObject();
-            readLock = false;
-            writeLock = false;
-            readingCount = 0;
         }
 
     }
@@ -229,7 +162,7 @@ public class BindTree implements Serializable {
      * تنشئ شجرة أسماء ربط
      */
     public BindTree() {
-        binds = new LinkedList<>();
+        binds = new ArrayList<>();
     }
 
     /**
@@ -242,7 +175,7 @@ public class BindTree implements Serializable {
         binds.add(bind);
     }
 
-    public synchronized List<Bind> getBinds() {
+    public List<Bind> getBinds() {
         return binds;
     }
 
@@ -264,11 +197,11 @@ public class BindTree implements Serializable {
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(binds);
+        out.writeObject(binds.toArray(new Bind[binds.size()]));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        binds = (LinkedList<Bind>) in.readObject();
+        binds = new ArrayList<>(Arrays.asList((Bind[])in.readObject()));
     }
 
 }

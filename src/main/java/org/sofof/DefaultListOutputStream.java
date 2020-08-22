@@ -90,7 +90,6 @@ public class DefaultListOutputStream implements ListOutputStream {
         File bindFolder = new File(db, bind);
         bindFolder.mkdir();
         BindClass bc = bindTree.getBind(bind).getBindClass(clazz);
-        bc.tryLockWrite();
         File oldStorage = bc.getStorageFile();
         File newStorage, temp = null;
         if (oldStorage != null) {
@@ -108,22 +107,20 @@ public class DefaultListOutputStream implements ListOutputStream {
             }
         }
         try {
-            try (FileOutputStream fos = new FileOutputStream(newStorage, false)) {
+            try ( FileOutputStream fos = new FileOutputStream(newStorage, false)) {
                 fos.write(serializer.serialize(objects));
             }
             if (temp != null && !transaction) {
                 temp.delete();
             }
+            bc.setStorageFile(newStorage);
         } catch (IOException ex) {
             if (temp != null && !transaction) {
                 newStorage.delete();
                 recover(temp);
             }
             throw new SofofException("an IOException thrown when trying to write. the database could be damaged", ex);
-        } finally {
-            bc.unlockWrite();
         }
-        bc.setStorageFile(newStorage);
         return objects;
     }
 

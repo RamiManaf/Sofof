@@ -43,9 +43,10 @@ public class DefaultListInputStream implements ListInputStream {
      * {@inheritDoc}
      */
     @Override
-    public LinkedList read(String bind, Class c) throws SofofException{
+    public LinkedList read(String bind, Class c) throws SofofException {
         return read(bind, c, null);
     }
+
     private LinkedList read(String bind, Class c, LinkedList sharedReferances) throws SofofException {
         if (bind == null || bind.isEmpty()) {
             bind = "SofofNoName";
@@ -55,12 +56,9 @@ public class DefaultListInputStream implements ListInputStream {
         byte[] serializedData = new byte[0];
         if (file != null) {
             try {
-                bc.tryLockRead();
                 serializedData = Files.readAllBytes(file.toPath());
             } catch (IOException ex) {
                 throw new SofofException("unable to read data from server files", ex);
-            } finally {
-                bc.unlockRead();
             }
         }
         LinkedList list;
