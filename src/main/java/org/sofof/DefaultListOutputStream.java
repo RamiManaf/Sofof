@@ -10,7 +10,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import org.sofof.serializer.Serializer;
 
@@ -26,7 +26,7 @@ public class DefaultListOutputStream implements ListOutputStream {
     private BindTree bindTree;
     private Serializer serializer;
     private boolean transaction;
-    private LinkedList<File> tempFiles;
+    private ArrayList<File> tempFiles;
 
     /**
      * إعداد كاتب القوائم
@@ -39,7 +39,7 @@ public class DefaultListOutputStream implements ListOutputStream {
         this.db = db;
         this.bindTree = bindTree;
         this.serializer = serializer;
-        tempFiles = new LinkedList<>();
+        tempFiles = new ArrayList<>();
     }
 
     /**
@@ -55,8 +55,8 @@ public class DefaultListOutputStream implements ListOutputStream {
             for (Field field : fields) {
                 if (field.getType().equals(ID.class)) {
                     field.setAccessible(true);
-                    LinkedList<Integer> usedIDNumbers = new LinkedList<>();
-                    LinkedList<Object> toGenerateID = new LinkedList<>();
+                    ArrayList<Integer> usedIDNumbers = new ArrayList<>();
+                    ArrayList<Object> toGenerateID = new ArrayList<>();
                     for (Object object : objects) {
                         ID baseID = (ID) field.get(object);
                         if (baseID != null) {
@@ -108,7 +108,7 @@ public class DefaultListOutputStream implements ListOutputStream {
         }
         try {
             try ( FileOutputStream fos = new FileOutputStream(newStorage, false)) {
-                fos.write(serializer.serialize(objects));
+                fos.write(serializer.serialize(objects.toArray(new Object[objects.size()])));
             }
             if (temp != null && !transaction) {
                 temp.delete();

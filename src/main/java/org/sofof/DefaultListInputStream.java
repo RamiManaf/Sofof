@@ -11,7 +11,9 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.sofof.serializer.Serializer;
 
 /**
@@ -43,11 +45,11 @@ public class DefaultListInputStream implements ListInputStream {
      * {@inheritDoc}
      */
     @Override
-    public LinkedList read(String bind, Class c) throws SofofException {
+    public List read(String bind, Class c) throws SofofException {
         return read(bind, c, null);
     }
 
-    private LinkedList read(String bind, Class c, LinkedList sharedReferances) throws SofofException {
+    private List read(String bind, Class c, List sharedReferances) throws SofofException {
         if (bind == null || bind.isEmpty()) {
             bind = "SofofNoName";
         }
@@ -61,12 +63,12 @@ public class DefaultListInputStream implements ListInputStream {
                 throw new SofofException("unable to read data from server files", ex);
             }
         }
-        LinkedList list;
+        ArrayList list;
         if (serializedData.length == 0) {
-            list = new LinkedList();
+            list = new ArrayList();
         } else {
             try {
-                list = (LinkedList) serializer.deserialize(serializedData);
+                list = new ArrayList(Arrays.asList((Object[])serializer.deserialize(serializedData)));
             } catch (ClassNotFoundException ex) {
                 throw new SofofException("the class read is not found in the classpath");
             }
@@ -77,12 +79,12 @@ public class DefaultListInputStream implements ListInputStream {
         return list;
     }
 
-    private void reloadBranches(Object object, LinkedList sharedReferances) throws SofofException {
+    private void reloadBranches(Object object, List sharedReferances) throws SofofException {
         if (object == null) {
             return;
         }
         if (sharedReferances == null) {
-            sharedReferances = new LinkedList();
+            sharedReferances = new ArrayList();
         }
         if (object.getClass().isPrimitive() || (object.getClass().getPackage() != null
                 && object.getClass().getPackage().getName().startsWith("java.lang"))) {
@@ -142,7 +144,7 @@ public class DefaultListInputStream implements ListInputStream {
     }
 
     private Object getObjectByID(ID id) throws SofofException {
-        LinkedList matches = read(id.getBind(), id.getClazz());
+        List matches = read(id.getBind(), id.getClazz());
         for (Object match : matches) {
             if (getBaseID(match).equals(id)) {
                 return match;
