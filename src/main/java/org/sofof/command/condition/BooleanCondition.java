@@ -8,7 +8,7 @@ package org.sofof.command.condition;
 import java.io.Serializable;
 
 /**
- *شرط ثابت أو بوليني
+ * A condition that checks a passed boolean value
  * @author Rami Manaf Abdullah
  * @see ObjectCondition
  */
@@ -19,24 +19,24 @@ public class BooleanCondition implements Condition, Serializable{
     private boolean condition;
     
     /**
-     * إنشاء شرط بالقيمة المحددة
-     * @param cond القيمة
+     * 
+     * @param condition 
      */
-    public BooleanCondition(boolean cond) {
-        this.condition = cond;
+    public BooleanCondition(boolean condition) {
+        this.condition = condition;
     }
     
     /**
-     * وضع قيمة جديدة للشرط
-     * @param cond القيمة الجديدة
+     * changes the boolean value
+     * @param condition new value
      */
-    public void set(boolean cond){
-        this.condition = cond;
+    public void set(boolean condition){
+        this.condition = condition;
     }
     
     /**
-     * يعيد قيمة هذا الشرط
-     * @return قيمة الشرط
+     * return the boolean value
+     * @return 
      */
     public boolean get(){
         return condition;

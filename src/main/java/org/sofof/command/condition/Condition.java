@@ -9,46 +9,50 @@ import org.sofof.SofofException;
 import java.io.Serializable;
 
 /**
- *شرط
+ * Represent condition that can be used by commands to decide which objects to apply on
  * @author Rami Manaf Abdullah
  */
 public interface Condition extends Serializable{
     
     /**
-     * تقوم بتنفيذ الشرط على الكائن الممرر
-     * @param obj الكائن
-     * @return تعيد صحيح إذا انطبق الشرط وخاطئ إذا لم ينطبق
+     * check if this condition apply on the passed object
+     * @param obj object to apply condition on
+     * @return true if the condition apply to the object and false otherwise
      * @throws SofofException 
      */
     public boolean check(Object obj) throws SofofException;
     
     /**
-     * تقوم بالعملية و المنطقية
-     * @param condition الشرط الممرر
-     * @return تعيد شرطا يطبق العملية المنطقية و على هذا الشرط والشرط الممرر
+     * Create a new condition that preform logical and operator on this and the passed condition
+     * @param condition 
+     * @return the new condition
      */
     default public Condition and(Condition condition){
         return new LogicalAndCondition(this, condition);
     }
     
     /**
-     * تقوم بالعملية أو المنطقية
-     * @param condition الشرط الممرر
-     * @return تعيد شرطا يطبق العملية المنطقية أو على هذا الشرط والشرط الممرر
+     * Create a new condition that preform logical or operator on this and the passed condition
+     * @param condition 
+     * @return the new condition
      */
     default public Condition or(Condition condition){
         return new LogicalOrCondition(this, condition);
     }
     
     /**
-     * تقوم بالعملية أو الخاصة
-     * @param condition الشرط الممرر
-     * @return تعيد شرطا يطبق العملية المنطقية أو الخاصة على هذا الشرط والشرط الممرر
+     * Create a new condition that preform logical xor operator on this and the passed condition
+     * @param condition 
+     * @return the new condition
      */
     default public Condition xor(Condition condition){
         return new LogicalXOrCondition(this, condition);
     }
     
+    /**
+     * Create a new condition that preform logical not operator on this condition
+     * @return the new condition
+     */
     default public Condition not(){
         return new LogicalNotCondition(this);
     }

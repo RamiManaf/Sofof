@@ -5,7 +5,7 @@
  */
 package org.sofof;
 
-import org.sofof.BindTree.BindClass;
+import org.sofof.BindingNamesTree.BindClass;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -17,25 +17,23 @@ import java.util.List;
 import org.sofof.serializer.Serializer;
 
 /**
- * قارئ القوائم
- *
+ * 
  * @author Rami Manaf Abdullah
  * @see DefaultListOutputStream
  */
 public class DefaultListInputStream implements ListInputStream {
 
     private File db;
-    private BindTree bindTree;
+    private BindingNamesTree bindTree;
     private Serializer serializer;
 
     /**
-     * إعداد قارئ القوائم من قاعدة البيانات
      *
-     * @param db مجلد قاعدة البيانات
-     * @param bindTree شجرة أسماء الربط
-     * @param serializer
+     * @param db database folder
+     * @param bindTree binding names tree
+     * @param serializer serializer which will be used to read serialized data
      */
-    public DefaultListInputStream(File db, BindTree bindTree, Serializer serializer) {
+    public DefaultListInputStream(File db, BindingNamesTree bindTree, Serializer serializer) {
         this.db = db;
         this.bindTree = bindTree;
         this.serializer = serializer;

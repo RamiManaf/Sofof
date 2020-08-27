@@ -16,8 +16,7 @@ import java.util.List;
 import org.sofof.ListInputStream;
 
 /**
- * تحديد يقوم بتحديد الكائنات التي سيتم الاستعلام عنها ضمن الشروط المحددة
- * والترتيب المحدد
+ * Can query for objects with certain conditions and in sorting way
  *
  * @author Rami Manaf Abdullah
  */
@@ -33,50 +32,50 @@ public class Select implements Query, Serializable {
     private boolean shuffle;
 
     /**
-     * تنشئ استعلام عن الصفوف المحددة
+     * Query for all objects of that class
      *
-     * @param c الصفوف
+     * @param c 
      */
     public Select(Class c) {
         this(c, null);
     }
 
     /**
-     * تنشئ استعلام عن نواتج تنفيذ النص على كائنات الصف الممرر
+     * Query for result of executed expression on the selected objects
      * <blockquote><pre>
      * List marks = session.query(new Select(Student.class, "#getMark()"));
      * </pre></blockquote>
      *
-     * @param c الصف
-     * @param expression النص التنفيذي
+     * @param c 
+     * @param expression expression that will be executed on the selected objects
+     * @see ExpressionExecuter
      */
     public Select(Class c, String expression) {
         this(c, expression, false);
     }
 
     /**
-     * تنشئ استعلام عن نواتج تنفيذ النص على كائنات الصف الممرر
+     * Query for result of executed expression on the selected objects
      * <blockquote><pre>
-     * List marks = session.query(new Select(Student.class, "#getMark()", false));
+     * List marks = session.query(new Select(Student.class, "#getMark()"));
      * </pre></blockquote>
      *
-     * @param c الصف
-     * @param expression النص التنفيذي
-     * @param shufle تحدد ما إن كنت تريد خلط الكائنات قبل التحقق منها من خلال الشروط
+     * @param c 
+     * @param expression expression that will be executed on the selected objects
+     * @param shuffle if true the query will shuffle the data before applying conditions to it. This is useful if you want to select limited random objects.
+     * @see ExpressionExecuter
      */
-    public Select(Class c, String expression, boolean shufle) {
+    public Select(Class c, String expression, boolean shuffle) {
         clazz = c;
         this.expression = expression;
-        this.shuffle = shufle;
+        this.shuffle = shuffle;
     }
 
     /**
-     * يحدد اسم الربط الذي سيتم الاستعلام عن الكائنات المربوطة به إذا لم يتم
-     * تحديد اسم الربط أو تم تمرير اللا قيمة أو تم تمرير نص يتكون من الفراغات
-     * فسيتم الاستعلام عن الكائنات المربوطة باسم الربط اللا اسم
+     * Specify the binding name that objects are bound to. If the name is empty space filled strings or null then the name will be converted to SofofNoName
      *
-     * @param bind اسم الربط
-     * @return الكائن نفسه
+     * @param bind binding name
+     * @return this object
      */
     public Select from(String bind) {
         this.bind = bind;
@@ -84,24 +83,24 @@ public class Select implements Query, Serializable {
     }
 
     /**
-     * تقوم بتحديد شرط ليتم تنفيذه على جميع الكائنات المستعلم عنها
+     * Specify a condition that will be applied on all queried objects
      *
-     * @param cond الشرط
-     * @return الكائن نفسه
+     * @param condition
+     * @return this object
      */
-    public Select where(Condition cond) {
-        condition = cond;
+    public Select where(Condition condition) {
+        this.condition = condition;
         return this;
     }
 
     /**
-     * تقوم بتحديد مرتب
+     * Specify a sorter to sort queried objects
      *
-     * @param s المرتب
-     * @return الكائن نفسه
+     * @param sorter sorter
+     * @return this object
      */
-    public Select sort(Sorter s) {
-        sorter = s;
+    public Select sort(Sorter sorter) {
+        this.sorter = sorter;
         return this;
     }
 

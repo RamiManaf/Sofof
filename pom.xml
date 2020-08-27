@@ -7,7 +7,7 @@
     </description>
     <groupId>io.github.ramimanaf</groupId>
     <artifactId>sofof</artifactId>
-    <version>3.0.1-SNAPSHOT</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
     <url>https://github.com/RamiManaf/Sofof</url>
     <properties>
@@ -32,6 +32,11 @@
             <artifactId>jsp-api</artifactId>
             <version>2.1</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20200518</version>
+        </dependency>
     </dependencies>
     <developers>
         <developer>
@@ -47,7 +52,7 @@
     </licenses>
     <build>
         <plugins>
-<!--            <plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.0.0</version>
@@ -62,7 +67,7 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>-->
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>

@@ -6,7 +6,6 @@
 package org.sofof;
 
 import java.util.List;
-import java.util.concurrent.locks.ReadWriteLock;
 
 /**
  *
@@ -16,18 +15,17 @@ public interface ListInputStream {
 
     /**
      * /**
-     * تقرأ قائمة من كائنات الصف المربوط باسم الربط الممرر 
+     * reads objects of the passed class bound to the passed binding name
      * {@code 
      * List list = in.read("students", Student.class);
      * Student s = (Student)list.get(0);
      * }
      *
-     * @param bind اسم الربط
-     * @param c الصف
-     * @return قائمة بكائنات الصف المقروءة وإذا لم يكن هناك كائنات ستعيد قائمة
-     * فارغة
+     * @param bindingName
+     * @param c
+     * @return return a list of the objects had been read
      * @throws SofofException
      */
-    public List read(String bind, Class c) throws SofofException;
+    public List read(String bindingName, Class c) throws SofofException;
 
 }

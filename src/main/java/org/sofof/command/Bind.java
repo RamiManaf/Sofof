@@ -11,13 +11,12 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
+import org.sofof.ListInputStream;
 
 /**
- * <h3>أمر ربط</h3>
- * يقوم بربط كائن باسم ربط وتخزينه في قاعدة البيانات, ويمكن لاسم الربط أن يكون
- * باللغة العربية أو أي لغة أخرى شرط أن لا يحتوي على أي من /|\*:?" &lt; &gt;
+ * binds objects to binding name and saves them in the database. binding name should not have any signs can not be used as a file name in your system like /|\*:?" &lt; &gt;
+ * if you try to query this object after executing it, it will return list of the same objects with the generated ID
  *
  * @author Rami Manaf Abdullah
  * @see Unbind
@@ -31,33 +30,31 @@ public class Bind implements Executable, Query, Serializable {
     private List<Object> objects;
     
     /**
-     * يقوم بربط الكائنات باسم ربط وتخزينهم
+     * save objects in the database
      *
-     * @param obj الكائنات
+     * @param obj
      */
     public Bind(Object... obj) {
         this.objects = new LinkedList<>(Arrays.asList(obj));
     }
     
     /**
-     * يقوم بربط الطائنات باسم ربط وتخزينهم
+     * save objects in the database
      *
-     * @param objs قائمة بالكائنات التي سيتم ربطها
+     * @param objs list of objects
      */
     public Bind(List objs) {
         this.objects = new LinkedList<>(objs);
     }
 
     /**
-     * يحدد اسم الربط الذي سيتم ربط الكائنات به إذا لم يتم تحديد اسم الربط أو تم
-     * تمرير اللا قيمة أو تم تمرير نص يتكون من المسافات فقط سيتم ربط الكائنات
-     * بالا اسم
+     * bind objects to passed binding name. if the name was null or not specified or space filled empty string the name will changes to SofofNoName
      *
-     * @param bind اسم الربط
-     * @return الكائن نفسه
+     * @param bindingName
+     * @return this object
      */
-    public Bind to(String bind) {
-        this.bind = bind;
+    public Bind to(String bindingName) {
+        this.bind = bindingName;
         return this;
     }
 
@@ -84,10 +81,11 @@ public class Bind implements Executable, Query, Serializable {
     }
     
     /**
-     * تستخدم لربط الكائن ثم إعادة قراءته بعد توليد المعرفات إن وجدت
-     * @param session الجلسة التي سيتم تنفيذ الأمر عليها
-     * @param bind الأمر
-     * @return قائمة بالكائنات التي تمت قراءتها
+     * save objects and query them then return a list of those objects with ID generated
+     * @param session session to execute on
+     * @param bind
+     * @return objects after saving and generating IDs
+     * @see org.sofof.ID
      * @throws SofofException 
      */
     public static List bindAndReload(Session session, Bind bind) throws SofofException{

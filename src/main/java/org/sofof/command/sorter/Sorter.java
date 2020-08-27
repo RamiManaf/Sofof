@@ -11,33 +11,50 @@ import java.io.Serializable;
 import java.util.List;
 
 /**
- *مرتب
- * يقوم بترتيب عناصر قائمة في استعلام معين
- * @see  Select
+ * Sort objects in the result of a query
+ *
+ * @see Select
  * @author Rami Manaf Abdullah
  */
-public interface Sorter extends Serializable{
-    
+public interface Sorter extends Serializable {
+
     static final long serialVersionUID = 766545;
-    
+
     /**
-     * تقوم بترتيب عناصر القائمة الممررة
-     * @param list القائمة
-     * @throws SofofException 
+     * sorts the list objects
+     *
+     * @param list
+     * @throws SofofException
      */
     public void sort(List list) throws SofofException;
-    
+
     /**
-     * تقوم بترتيب الكائنات بالمرتب الممرر ثم ترتيبها بالمرتب الحالي, وهكذا تكون الأولوية للحالي.
-     * @param sorter المرتب الممرر
-     * @return المرتب المشترك
+     * Sort objects by this sorter after sorting them with the passed sorter.
+     * The priority of sorting will be to this sorter then to the passed one
+     *
+     * @param sorter sorter with less priority
+     * @return new sorter
      */
-    default public Sorter after(Sorter sorter){
-        Sorter th = this;
-        return (list) -> {
-            sorter.sort(list);
-            th.sort(list);
-        };
+    default public Sorter after(Sorter sorter) {
+        return new SortAfter(sorter, this);
     }
-    
+
+}
+
+class SortAfter implements Sorter, Serializable {
+
+    private Sorter first;
+    private Sorter after;
+
+    SortAfter(Sorter first, Sorter after) {
+        this.first = first;
+        this.after = after;
+    }
+
+    @Override
+    public void sort(List list) throws SofofException {
+        first.sort(list);
+        after.sort(list);
+    }
+
 }

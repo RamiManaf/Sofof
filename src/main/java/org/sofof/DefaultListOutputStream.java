@@ -5,7 +5,7 @@
  */
 package org.sofof;
 
-import org.sofof.BindTree.BindClass;
+import org.sofof.BindingNamesTree.BindClass;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,7 +15,6 @@ import java.util.List;
 import org.sofof.serializer.Serializer;
 
 /**
- * كاتب القوائم
  *
  * @author Rami Manaf Abdullah
  * @see DefaultListInputStream
@@ -23,19 +22,18 @@ import org.sofof.serializer.Serializer;
 public class DefaultListOutputStream implements ListOutputStream {
 
     private File db;
-    private BindTree bindTree;
+    private BindingNamesTree bindTree;
     private Serializer serializer;
     private boolean transaction;
     private ArrayList<File> tempFiles;
 
     /**
-     * إعداد كاتب القوائم
      *
-     * @param db مجلد قاعدة البيانات
-     * @param bindTree شجرة أسماء الربط
-     * @param serializer
+     * @param db database folder
+     * @param bindTree binding names tree
+     * @param serializer serializer which will be used to serialize objects
      */
-    public DefaultListOutputStream(File db, BindTree bindTree, Serializer serializer) {
+    public DefaultListOutputStream(File db, BindingNamesTree bindTree, Serializer serializer) {
         this.db = db;
         this.bindTree = bindTree;
         this.serializer = serializer;
@@ -124,14 +122,6 @@ public class DefaultListOutputStream implements ListOutputStream {
         return objects;
     }
 
-    /**
-     * <p>
-     * تنشئ ملف باسم رقم من نظام العد السادس عشري.</p>
-     *
-     * @param folder المجلد الذي سيتم إنشاء الملف داخله
-     * @return الملف المنشأ
-     * @throws IOException
-     */
     private File createHexFile(File folder) throws IOException {
         long level = 0;
         while (new File(folder, Long.toHexString(level)).exists()) {
@@ -154,7 +144,7 @@ public class DefaultListOutputStream implements ListOutputStream {
      * {@inheritDoc}
      */
     @Override
-    public void commite() {
+    public void commit() {
         transaction = false;
         tempFiles.forEach((file) -> file.delete());
     }

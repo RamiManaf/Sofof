@@ -10,11 +10,11 @@ import org.sofof.command.condition.Condition;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
-import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
+import org.sofof.ListInputStream;
 
 /**
- * تحديث الكائنات المحددة
+ * Update objects with new ones
  *
  * @author Rami Manaf Abdullah
  */
@@ -29,30 +29,28 @@ public class Update implements Executable, Serializable {
     private Condition condition;
 
     /**
-     * إنشاء محدث لكائنات الصف المحدد
+     * Updates objects with the specified class
      *
-     * @param c الصف
+     * @param c
      */
     public Update(Class c) {
         clazz = c;
     }
 
     /**
-     * إنشاء محدث للكائن الممرر
+     * Updates all objects from the object class that equals it
      *
-     * @param obj الكائن
+     * @param obj
      */
     public Update(Object obj) {
         object = obj;
     }
 
     /**
-     * يحدد اسم الربط الذي سيتم تحديث الكائنات المرتبطة به إذا لم يتم تحديد اسم
-     * الربط أو تم تمرير اللا قيمة أو تم تمرير نص يتكون من الفراغات سيتم تحديق
-     * الكائنات المرتبطة باسم الربط اللا اسم
+     * Specify the binding name that objects are bound to. If the name is empty space filled strings or null then the name will be converted to SofofNoName.
      *
-     * @param bind اسم الربط
-     * @return الكائن نفسه
+     * @param bind binding name
+     * @return this object
      */
     public Update from(String bind) {
         this.bind = bind;
@@ -60,10 +58,10 @@ public class Update implements Executable, Serializable {
     }
 
     /**
-     * تحدد الكائن الذي سيتم وضعه بدل الكائنات التي تنطبق عليها الشروط
+     * Specify the new object that will replace the selected objects
      *
-     * @param update الكائن الجديد
-     * @return الكائن نفسه
+     * @param update new object
+     * @return this object
      */
     public Update set(Object update) {
         this.update = update;
@@ -71,13 +69,13 @@ public class Update implements Executable, Serializable {
     }
 
     /**
-     * تضيف شرطا يوجب على الكائنات تحقيقه لتحديثها
+     * Add a condition that will be applied on objects to update them. Only for the constructor with class argument.
      *
-     * @param cond الشرط
-     * @return الكائن نفسه
+     * @param condition 
+     * @return this object
      */
-    public Update where(Condition cond) {
-        condition = cond;
+    public Update where(Condition condition) {
+        this.condition = condition;
         return this;
     }
 

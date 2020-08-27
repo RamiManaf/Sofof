@@ -5,6 +5,7 @@
  */
 package org.sofof;
 
+import java.io.EOFException;
 import org.sofof.command.Executable;
 import org.sofof.command.Query;
 import org.sofof.permission.User;
@@ -18,15 +19,13 @@ import javax.net.ssl.SSLSocketFactory;
 import org.sofof.serializer.Serializer;
 
 /**
- * <h3>الجلسة</h3>
- * <p>
- * تسمح الجلسة بتنفيذ الأوامر على قاعدة البيانات, ويتم بدء الجلسة من خلال كائن
- * قاعدة البيانات.</p>
+ * allow remote users to execute commands on the database. you can start a new session from SessionManager
  * <blockquote><pre>
- * Server s = new Server(new File(db), 6969, false).startUp();
- * s.addUser(new User("rami", "password"));
- * Database db = new Database("localhost", 6969);
- * try(Session session = db.startSession(new User("rami", "password"), false)){
+ * Server s = new Server(new File(db), 6969, false);
+ * s.createDatabase();
+ * s.startUp();
+ * s.getUsers().add(new User("rami", "password"));
+ * try(Session session = SessionManager.startSession("sofof:localhost:6969", new User("rami", "password"))){
  * .....
  * }
  * </pre></blockquote>
@@ -64,11 +63,11 @@ public class Session implements AutoCloseable {
     }
 
     /**
-     * تنفذ أمرا تنفيذيا على قاعدة البيانات
+     * execute an Executable on the database
      *
-     * @param exe الأمر التنفيذي
-     * @return عدد الكائنات التي تأثرت بالأمر
-     * @throws SofofException حدوث خطأ في الاتصال بالخادم
+     * @param exe
+     * @return usually number of affected objects
+     * @throws SofofException connection or executing error
      */
     public synchronized int execute(Executable exe) throws SofofException {
         try {
@@ -88,21 +87,24 @@ public class Session implements AutoCloseable {
     }
 
     /**
-     * تنفيذ استعلام
+     * execute a query
      *
-     * @param query الاستعلام
-     * @return تعيد قائمة بالكائنات المستعلم عنها أو قائمة فارغة, لا تعيد أبدا
-     * لا قيمة
-     * @throws SofofException حدوث خطأ في الاتصال بالخادم
+     * @param query
+     * @return list of queried objects. never null
+     * @throws SofofException
      */
     public synchronized List query(Query query) throws SofofException {
         try {
             socket.getOutputStream().write(COMMAND_QUERY);
             writeObjct(socket.getOutputStream(), serializer, query);
             Object result = readObject(socket.getInputStream(), serializer);
-            if(result instanceof SofofException) throw (SofofException)result;
-            else if (result instanceof SecurityException) throw (SecurityException)result;
-            else return (List) result;
+            if (result instanceof SofofException) {
+                throw (SofofException) result;
+            } else if (result instanceof SecurityException) {
+                throw (SecurityException) result;
+            } else {
+                return (List) result;
+            }
         } catch (IOException ex) {
             throw new SofofException("can not query on " + socket.getInetAddress().getHostName(), ex);
         }
@@ -113,14 +115,21 @@ public class Session implements AutoCloseable {
             byte[] objectSize = new byte[4];
             in.read(objectSize);
             byte[] object = new byte[ByteBuffer.wrap(objectSize).getInt()];
-            in.read(object);
+            int position = 0;
+            while (position < object.length) {
+                int bytesRead = in.read(object, position, object.length - position);
+                if (bytesRead == -1) {
+                    throw new SofofException(new EOFException("had read only "+position+" of "+object.length+" and end of stream is reached"));
+                }
+                position += bytesRead;
+            }
             return serializer.deserialize(object);
         } catch (ClassNotFoundException ex) {
             throw new SofofException(ex);
         }
     }
-    
-    static void writeObjct(OutputStream out, Serializer serializer, Object obj) throws SofofException, IOException{
+
+    static void writeObjct(OutputStream out, Serializer serializer, Object obj) throws SofofException, IOException {
         byte[] serializedObject = serializer.serialize(obj);
         out.write(ByteBuffer.allocate(4).putInt(serializedObject.length).array());
         out.write(serializedObject);
@@ -128,7 +137,7 @@ public class Session implements AutoCloseable {
     }
 
     /**
-     * تقوم بإغلاق الجلسة
+     * close the session
      *
      * @throws org.sofof.SofofException
      */

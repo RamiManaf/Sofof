@@ -15,21 +15,20 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * شجرة أسماء الربط
+ * Data structure that link data files to classes to binding names
  *
  * @author Rami Manaf Abdullah
  */
-public class BindTree implements Serializable {
+public class BindingNamesTree implements Serializable {
 
     private static final long serialVersionUID = 725607124l;
 
-    private ArrayList<Bind> binds;
+    private ArrayList<BindingName> binds;
 
     /**
-     * <p>
-     * إنشاء اسم ربط.</p>
+     * binding name
      */
-    public static class Bind implements Serializable {
+    public static class BindingName implements Serializable {
 
         private static final long serialVersionUID = 7980792384l;
 
@@ -38,16 +37,16 @@ public class BindTree implements Serializable {
 
         /**
          *
-         * @param name اسم الريط
+         * @param name binding name
          */
-        public Bind(String name) {
+        public BindingName(String name) {
             this.name = name;
             classes = new ArrayList<>();
         }
 
         /**
          *
-         * @return اسم الربط
+         * @return binding name
          */
         public String getName() {
             return name;
@@ -55,16 +54,16 @@ public class BindTree implements Serializable {
 
         /**
          *
-         * @return الصفوف المرتبطة باسم الربط
+         * @return classes bound to this binding name
          */
         public List<BindClass> getClasses() {
             return new ArrayList<>(classes);
         }
 
         /**
-         *
-         * @param c الصف الذي سيتم إعادة كائن الصف المرتبط
-         * @return الصف المرتبط
+         * return BindClass object for the passed class. If there is no BindClass with this class the method will create new one
+         * @param c class which you want to get his BindClass object
+         * @return BindClass
          */
         public BindClass getBindClass(Class c) {
             for (BindClass bindClass : classes) {
@@ -89,39 +88,35 @@ public class BindTree implements Serializable {
 
     }
 
-    /**
-     * الصف المرتبط
-     */
     public static class BindClass implements Serializable {
 
         private static final long serialVersionUID = -8986234l;
 
-        private Bind bind;
+        private BindingName bind;
         private Class clazz;
         private File storageFile;
 
         /**
-         * الصف المرتبط
          *
-         * @param bind اسم الربط
-         * @param c الصف المرتبط باسم الربط
+         * @param bind binding name which this object will be bound to
+         * @param c class bound to the binding name
          */
-        public BindClass(Bind bind, Class c) {
+        public BindClass(BindingName bind, Class c) {
             this.bind = bind;
             this.clazz = c;
         }
 
         /**
          *
-         * @return كائن اسم الربط
+         * @return binding name which this class is linked to
          */
-        public Bind getBind() {
+        public BindingName getBind() {
             return bind;
         }
 
         /**
-         *
-         * @return الصف المرتبط
+         * 
+         * @return class object associated to this BindClass
          */
         public Class getClazz() {
             return clazz;
@@ -129,16 +124,15 @@ public class BindTree implements Serializable {
 
         /**
          *
-         * @return الملف الذي يتم تخزين كائنات الصف فيه
+         * @return storage file that objects are stored in it
          */
         public File getStorageFile() {
             return storageFile;
         }
 
         /**
-         * تحدد الملفات التي تخزن الكائنات
-         *
-         * @param storageFile الملفات
+         * set the storage file that objects of this class are saved in it
+         * @param storageFile 
          */
         public void setStorageFile(File storageFile) {
             this.storageFile = storageFile;
@@ -151,57 +145,52 @@ public class BindTree implements Serializable {
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-            bind = (Bind) in.readObject();
+            bind = (BindingName) in.readObject();
             clazz = (Class) in.readObject();
             storageFile = (File) in.readObject();
         }
 
     }
 
-    /**
-     * تنشئ شجرة أسماء ربط
-     */
-    public BindTree() {
+    public BindingNamesTree() {
         binds = new ArrayList<>();
     }
 
     /**
-     * <p>
-     * تضيف كائن اسم ربط</p>
-     *
-     * @param bind كائن اسم الربط
+     * add binding name to the tree
+     * @param bind binding name to be added
      */
-    public synchronized void addBind(Bind bind) {
+    public synchronized void addBind(BindingName bind) {
         binds.add(bind);
     }
 
-    public List<Bind> getBinds() {
+    public List<BindingName> getBinds() {
         return binds;
     }
 
     /**
-     * تعيد كائن اسم الربط الخاص باسم الربط الممرر
+     * return BindingName with the passed name and if there is no one it will create one
      *
-     * @param bindName اسم الربط
+     * @param bindName
      * @return
      */
-    public Bind getBind(String bindName) {
-        for (Bind bind : binds) {
+    public BindingName getBind(String bindName) {
+        for (BindingName bind : binds) {
             if (bind.getName().equals(bindName)) {
                 return bind;
             }
         }
-        Bind b = new Bind(bindName);
+        BindingName b = new BindingName(bindName);
         addBind(b);
         return b;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(binds.toArray(new Bind[binds.size()]));
+        out.writeObject(binds.toArray(new BindingName[binds.size()]));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        binds = new ArrayList<>(Arrays.asList((Bind[])in.readObject()));
+        binds = new ArrayList<>(Arrays.asList((BindingName[])in.readObject()));
     }
 
 }

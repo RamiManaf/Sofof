@@ -25,30 +25,20 @@ import java.util.logging.Logger;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import org.sofof.serializer.JavaSerializer;
 import org.sofof.serializer.Serializer;
+import org.sofof.serializer.SofofSerializer;
 import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 /**
- * <h3>خادم قاعدة البيانات</h3>
- * <p>
- * يقوم هذا الخادم بخدمة قاعدة البيانات حتى تتمكن أي جلسة من تنفيذ الأوامر على
- * قاعدة البيانات.</p>
+ * <h3>Sofof default server</h3>
+ * this server offer the database services for sessions
  *
- * <p>
- * يجب تشغيل الخادم حتى يعمل</p>
  * <blockquote><pre>
  * Server s = new Server(new File("db"), 6969, false);
  * s.startUp();
  * </pre></blockquote>
- * <p>
- * يمكن استخدام ملف توصيف لوصف قاعدة البيانات للخادم, ويتبع هذا الملف للقواعد
- * التالية:</p>
- * <ul>
- * <li>يجب أن يكون اسم الملف sofof.xml</li>
- * <li>يجب وضعه في المسار الأصلي وليس تحت أي حزمة</li>
- * </ul>
+ * you can configure the server using xml files. The file should have the sofof.xml name and should be placed in the default package
  *
  * @author Rami Manaf Abdullah
  * @see User
@@ -63,14 +53,11 @@ public class Server extends Thread {
     private boolean ssl;
     private Serializer serializer;
     private ServerSocket socket;
-    private volatile BindTree bindTree;
+    private volatile BindingNamesTree bindTree;
     private List<User> users;
     private List<String> clients;
     private ReentrantReadWriteLock readWriteLock;
 
-    /**
-     * تنشئ كائن الخادم
-     */
     public Server() {
         this(null);
     }
@@ -80,30 +67,39 @@ public class Server extends Thread {
     }
 
     /**
-     * ينشئ كائن الخادم
      *
-     * @param db مجلد قاعدة البيانات
-     * @param port المنفذ الذي سيستمع الخادم إليه
-     * @param ssl استخدام طبقة المقابس الآمنة
+     * @param db database folder
+     * @param port port which the server will listen to sessions requests. pass -1 for using Server locally
+     * @param ssl use ssl
      */
     public Server(File db, int port, boolean ssl) {
         this(db, port, ssl, new ArrayList<>());
     }
 
     /**
-     * ينشئ كائن الخادم
      *
-     * @param db مجلد قاعدة البيانات
-     * @param port المنفذ الذي سيستمع الخادم إليه
-     * @param ssl استخدام طبقة المقابس الآمنة
-     * @param users قائمة بالمستخدمين
+     * @param db database folder
+     * @param port port which the server will listen to sessions requests. pass -1 for using Server locally
+     * @param ssl use ssl
+     * @param users users list
      */
     public Server(File db, int port, boolean ssl, List<User> users) {
+        this(db, port, ssl, users, new SofofSerializer());
+    }
+    /**
+     *
+     * @param db database folder
+     * @param port port which the server will listen to sessions requests. pass -1 for using Server locally
+     * @param ssl use ssl
+     * @param users users list
+     * @param serializer serializer that will be used for communication
+     */
+    public Server(File db, int port, boolean ssl, List<User> users, Serializer serializer) {
         this.db = db;
         this.port = port;
         this.ssl = ssl;
         this.users = new ArrayList<>(Objects.requireNonNull(users));
-        serializer = new JavaSerializer();
+        this.serializer = serializer;
         readWriteLock = new ReentrantReadWriteLock(true);
     }
 
@@ -111,32 +107,51 @@ public class Server extends Thread {
         return serializer;
     }
 
+    /**
+     * 
+     * @return allowed users list
+     */
     public List<User> getUsers() {
         return users;
     }
 
+    /**
+     * 
+     * @return allowed hosts list or null if there is no restriction on hosts that will use the database
+     */
     public List<String> getClients() {
         return clients;
     }
 
+    /**
+     * changes the serializer
+     * @param serializer 
+     */
     public void setSerializer(Serializer serializer) {
         this.serializer = Objects.requireNonNull(serializer);
     }
 
+    /**
+     * sets a new allowed users list
+     * @param users 
+     */
     public void setUsers(List<User> users) {
         this.users = Objects.requireNonNull(users);
     }
 
+    /**
+     * sets hosts or ip addresses of the allowed hosts to connect to the database
+     * @param clients 
+     */
     public void setClients(List<String> clients) {
         this.clients = clients;
     }
 
     /**
-     * <p>
-     * تقوم بتشغيل الخادم</p>
+     * startup the server
      *
      * @throws SofofException
-     * @return الخادم نفسه
+     * @return this object
      */
     public Server startUp() throws SofofException {
         try {
@@ -235,7 +250,7 @@ public class Server extends Thread {
                         } finally {
                             lock.unlock();
                         }
-                        commite();
+                        commit();
                     } else if (type == Session.COMMAND_QUERY) {
                         Lock lock = readWriteLock.readLock();
                         try {
@@ -303,7 +318,7 @@ public class Server extends Thread {
 
     private void readMetaData() throws SofofException {
         try {
-            bindTree = (BindTree) serializer.deserialize(Files.readAllBytes(new File(db, "binds").toPath()));
+            bindTree = (BindingNamesTree) serializer.deserialize(Files.readAllBytes(new File(db, "binds").toPath()));
         } catch (IOException ex) {
             throw new SofofException("can not read meta data", ex);
         } catch (ClassNotFoundException ex) {
@@ -312,12 +327,11 @@ public class Server extends Thread {
     }
 
     /**
-     * <h3>حفظ</h3>
-     * يتم حفظ إعدادات قاعدة البيانات
+     * save BindingNamesTree to binds file
      *
      * @throws SofofException
      */
-    private synchronized void commite() throws SofofException {
+    private synchronized void commit() throws SofofException {
         try ( FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
             out.write(serializer.serialize(bindTree));
             out.flush();
@@ -327,10 +341,10 @@ public class Server extends Thread {
     }
 
     /**
-     * تقوم بإعداد الخادم من ملف sofof.xml
+     * configure the server from an xml file
      *
-     * @return الخادم نفسه
-     * @throws SofofException حدوث خطأ في تحميل الملف وتفسيره
+     * @return this object
+     * @throws SofofException when there is an error in reading the xml file
      */
     public Server configure() throws SofofException {
         loadXML();
@@ -352,10 +366,10 @@ public class Server extends Thread {
     }
 
     /**
-     * تستخدم في حالة كان الخادم داخليا فقط
+     * use this method only if this server is local (port=-1)
      *
-     * @param exe الأمر
-     * @return ناتج تنفيذ الأمر, غالبا عدد الكائنات المتأثرة بالأمر
+     * @param exe
+     * @return usually affected objects
      * @throws SofofException
      */
     public int execute(Executable exe) throws SofofException {
@@ -370,15 +384,15 @@ public class Server extends Thread {
         } finally {
             lock.unlock();
         }
-        commite();
+        commit();
         return result;
     }
 
     /**
-     * تستخدم في حالة كان الخادم داخليا فقط
+     * use this method only if this server is local (port=-1)
      *
-     * @param query الاستعلام
-     * @return قائمة بالكائنات المستعلم عنها
+     * @param query 
+     * @return list of queried objects
      * @throws SofofException
      */
     public List query(Query query) throws SofofException {
@@ -397,16 +411,10 @@ public class Server extends Thread {
     }
 
     /**
-     * <p>
-     * تنشئ قاعدة بيانات, إذا كان هناك قاعدة بيانات بنفس الاسم لن يتم عمل أي
-     * شيء.</p>
+     * creates a new database folder and binds file. if there is an existing folder this method will not do anything
      *
-     * <p>
-     * يجب الانتباه إلى أن ملف قاعدة البيانات لا يجب أن يكون موجودا</p>
-     *
-     * @return تعيد صحيح إذا كانت قاعدة البيانات غير موجودة وخاطئ إذا كانت هناك
-     * قاعدة موجودة بنفس الاسم
-     * @throws SofofException إذا حدث أي خطأ دخل وخرج
+     * @return true if a new database is created successfully and false if there is a folder with the same name
+     * @throws SofofException
      */
     public boolean createDatabase() throws SofofException {
         if (!db.exists()) {
@@ -415,7 +423,7 @@ public class Server extends Thread {
                 File binds = new File(db, "binds");
                 binds.createNewFile();
                 try ( FileOutputStream out = new FileOutputStream(binds, false)) {
-                    out.write(serializer.serialize(new BindTree()));
+                    out.write(serializer.serialize(new BindingNamesTree()));
                 }
             } catch (IOException ex) {
                 throw new SofofException("couldn't create database ", ex);
@@ -427,11 +435,7 @@ public class Server extends Thread {
     }
 
     /**
-     * <p>
-     * تغلق الخادم بشكل سليم مع حفظ إعدادات قاعدة البيانات, في الوضع الافتراضي
-     * للخادم يكون مخفيا Deamon وستنفذ هذه الدالة عن إغلاق البرنامج بشكل طبيعي,
-     * أما عندما يحدد الخادم كغير مخفي فيجب تنفيذ هذه الدالة عند الانتهاء من
-     * استخدام قاعدة البيانات.</p>
+     * stops the server listening and stop other connections
      *
      * @throws org.sofof.SofofException
      */
@@ -447,9 +451,12 @@ public class Server extends Thread {
         }
     }
 
+    /**
+     * recover the server from forced closing
+     */
     private void cleanUp() {
-        for (BindTree.Bind bind : bindTree.getBinds()) {
-            for (BindTree.BindClass bindClass : bind.getClasses()) {
+        for (BindingNamesTree.BindingName bind : bindTree.getBinds()) {
+            for (BindingNamesTree.BindClass bindClass : bind.getClasses()) {
                 if (bindClass.getStorageFile() != null) {
                     File temp = new File(bindClass.getStorageFile().getParentFile(), "temp-" + bindClass.getStorageFile().getName());
                     if (temp.exists()) {

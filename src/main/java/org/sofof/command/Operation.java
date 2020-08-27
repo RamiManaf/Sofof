@@ -10,36 +10,18 @@ import java.io.Serializable;
 import org.sofof.SofofException;
 
 /**
- * <h3>عملية</h3>
- * يقوم الصف عملية بإجراء عمليات المقارنة بين طرفين
+ * Preform relational operations
  *
  * @see ObjectCondition
  * @author Rami Manaf Abdullah
  */
 public enum Operation implements Serializable {
-    /**
-     * يساوي
-     */
+
     Equal,
-    /**
-     * لا يساوي
-     */
     NotEqual,
-    /**
-     * أكبر
-     */
     Greater,
-    /**
-     * أكبر أو يساوي
-     */
     GreaterOrEqual,
-    /**
-     * أصغر
-     */
     Less,
-    /**
-     * أصغر أو يساوي
-     */
     LessOrEqual;
 
     private static final long serialVersionUID = 793298438908l;

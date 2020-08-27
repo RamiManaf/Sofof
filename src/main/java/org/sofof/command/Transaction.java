@@ -8,8 +8,8 @@ package org.sofof.command;
 import org.sofof.SofofException;
 import java.util.Arrays;
 import java.util.List;
-import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
+import org.sofof.ListInputStream;
 
 /**
  *
@@ -19,9 +19,10 @@ public class Transaction implements Executable {
 
     private List<Executable> executables;
 
-    public Transaction() {
-    }
-
+    /**
+     * execute all executables as a transaction
+     * @param executables 
+     */
     public Transaction(Executable... executables) {
         this.executables = Arrays.asList(executables);
     }
@@ -34,7 +35,7 @@ public class Transaction implements Executable {
                 for (Executable executable : executables) {
                     executable.execute(in, out);
                 }
-                out.commite();
+                out.commit();
             } catch (SofofException ex) {
                 out.rollback();
                 throw new SofofException(ex);

@@ -8,8 +8,7 @@ package org.sofof.command.condition;
 import org.sofof.SofofException;
 
 /**
- * يقوم هذا الشرط بتحديد عدد محدد من الكائنات للاستعلام عنها, ولا يجوز استخدام
- * نفس الكائن أكثر من مرة.
+ * Apply on n number of objects.
  *
  * @author Rami Manaf Abdullah
  */
@@ -18,16 +17,18 @@ public class LimitCondition implements Condition {
     private int limit;
     private int offset;
 
+    /**
+     * Apply only to the passed number of objects
+     * @param limit number of objects that this condition apply on
+     */
     public LimitCondition(int limit) {
         this(limit, 0);
     }
 
     /**
-     * يقوم هذا الشرط بتحديد عدد محدد من الكائنات للاستعلام عنها
-     *
-     * @param limit عدد الكائنات
-     * @param offset عدد الكائنات التي سيبدأ بعدها هذا الشرط بقبول العدد المحدد
-     * من الكائنات
+     * Apply only to the limit number of objects starting after the offset
+     * @param limit number of objects that this condition apply on
+     * @param offset number of objects that this condition will skip them
      */
     public LimitCondition(int limit, int offset) {
         if (limit < -1) {

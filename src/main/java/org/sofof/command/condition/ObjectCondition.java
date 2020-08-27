@@ -11,26 +11,16 @@ import org.sofof.command.Operation;
 import java.io.Serializable;
 
 /**
- * شرط كائني
- * <p>
- * يمكنك هذا الشرط من القيام ببعض العمليات على الكائن للتأكد من أنه الكائن
- * المطلوب
- * </p>
- * <p>
- * {@link org.sofof.command.ExpressionExecuter النص التنفيذي}
- *
- * يتم تطبيق النص التنفيذي وتحويله إما إلى كائن أو إلى قيمة عددية أو منطقية
- * وتتوفر لك مجموعة من عمليات المقارنة بحيث تستطيع مقارنة نواتج النصين
- * التنفيذيين عبر التعداد {@link Operation}
- * </p>
- * يمكنك تنفيذ الدوال واستدعاء الحقول على نواتج دوال أو حقول أخرى وهذه بعض
- * الأمثلة
+ * Preform operations on the objects to decide to select them or not using the {@link org.sofof.command.ExpressionExecuter }.
+ * The expression get executed and return boolean value or numerical value that you can preform relational operator using 
+ * {@link Operation} on it or objects that you can check equality with them.
+ * 
+ * e.g:
  * <blockquote><pre>
  * ObjectCondition cond = new ObjectCondition("#getMark()", Operation.Greater, "#50");
  * ObjectCondition cond = new ObjectCondition("#getName()", Operation.Equal, "Rami");
  * </pre></blockquote>
  *
- * @see BooleanCondition
  * @author Rami Manaf Abdullah
  */
 public class ObjectCondition implements Condition, Serializable {
@@ -42,14 +32,11 @@ public class ObjectCondition implements Condition, Serializable {
     private Operation operation;
 
     /**
-     * إنشاء شرط كائني بتمرير نصين تنفيذيين على الكائن وعملية للمقارنة بين
-     * نتيجتي النصين الممررين يمكن أن يكون الناتج عن النصين كائنا معينا وعندها
-     * يمكن فقط تنفيذ العمليتين يساوي أو لا يساوي
-     * {@link ExpressionExecuter النص التنفيذي}
+     * You can pass objects or expressions to be executed on database objects and finally preform the relational operation on them
      *
-     * @param side1 النص التنفيذي الأول
-     * @param operation العملية
-     * @param side2 النص التنفيذي الثاني
+     * @param side1 first object or expression
+     * @param operation relational operation
+     * @param side2 second object or expression
      */
     public ObjectCondition(Object side1, Operation operation, Object side2) {
         this.side1 = side1;

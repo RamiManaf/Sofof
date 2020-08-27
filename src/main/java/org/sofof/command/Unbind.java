@@ -13,11 +13,11 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
-import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
+import org.sofof.ListInputStream;
 
 /**
- * أمر إلغاء ربط الكائنات المحددة باسم الربط
+ * unbind (delete) objects bound to a specific binding name
  *
  * @author Rami Manaf Abdullah
  * @see Bind
@@ -34,38 +34,37 @@ public class Unbind implements Executable, Serializable {
     private Condition condition;
 
     /**
-     * إنشاء أمر إلغاء الربط بالصفوف المحددة
+     * unbind all objects of the passed classes
      *
-     * @param c الصفوف
+     * @param c
      */
     public Unbind(Class... c) {
         classes = new LinkedList<>(Arrays.asList(c));
     }
 
     /**
-     * إنشاء أمر إلغاء ربط الكائنات المحددة
+     * unbind passed objects by checking equality with stored objects
      *
-     * @param objs الكائنات
+     * @param objs 
      */
     public Unbind(Object... objs) {
         this(Arrays.asList(objs));
     }
 
     /**
+     * unbind passed objects by checking equality with stored objects
      *
-     * @param objs
+     * @param objs 
      */
     public Unbind(List objs) {
         objects = new LinkedList<>(objs);
     }
     
     /**
-     * يحدد اسم الربط الذي سيتم إلغاء ربط الكائنات به إذا لم يتم تحديد اسم الربط
-     * أو تم تمرير اللا قيمة أو تم تمرير نص يتكون من فراغات فقط سيتم إلغاء ربط
-     * الكائنات من اسم الربط اللا اسم
+     * Specify the binding name that objects are bound to. If the name is empty space filled strings or null then the name will be converted to SofofNoName.
      *
-     * @param bind اسم الربط
-     * @return الكائن نفسه
+     * @param bind binding name
+     * @return this object
      */
     public Unbind from(String bind) {
         this.bind = bind;
@@ -73,13 +72,13 @@ public class Unbind implements Executable, Serializable {
     }
 
     /**
-     * تقوم بإضافة شرط ليتم إلغاء ربط الكائنات التي تحققه
+     * Add a condition that objects must meet it to unbind them. Only apply if you choose the constructor with classes argument.
      *
-     * @param cond الشرط
-     * @return الكائن نفسه
+     * @param condition
+     * @return this object
      */
-    public Unbind where(Condition cond) {
-        condition = cond;
+    public Unbind where(Condition condition) {
+        this.condition = condition;
         return this;
     }
 

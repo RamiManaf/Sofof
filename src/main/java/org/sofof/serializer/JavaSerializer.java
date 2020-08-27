@@ -10,28 +10,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.Objects;
 import org.sofof.SofofException;
 
 /**
- *
+ * Use the java API to serialize objects.
  * @author Rami Manaf Abdullah
  */
 public class JavaSerializer implements Serializer {
 
-    private final String name;
-
-    public JavaSerializer() {
-        this("java");
-    }
-
-    public JavaSerializer(String name) {
-        this.name = name;
-    }
-
     @Override
     public String getName() {
-        return name;
+        return "java";
     }
 
     @Override
@@ -51,31 +40,6 @@ public class JavaSerializer implements Serializer {
         } catch (IOException ex) {
             throw new SofofException(ex);
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final JavaSerializer other = (JavaSerializer) obj;
-        if (!Objects.equals(this.name, other.name)) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 19 * hash + Objects.hashCode(this.name);
-        return hash;
     }
 
 }

@@ -14,36 +14,37 @@ import java.util.List;
 public interface ListOutputStream {
 
     /**
-     * تكتب قائمة في قاعدة البيانات وتربطها باسم الربط 
+     * write the objects list to the database and any old objects stored previously will be removed
      * {@code 
      * List<Student> list;
      * ...
      * out.write(list, "Students", Student.class);
      * }
      *
-     * @param objects القائمة
-     * @param bind اسم الربط
-     * @param clazz الصف الذي تتكون منه القائمة
-     * @return تعيد الصفوف بعد توليد معرف لها
+     * @param objects
+     * @param bindingName
+     * @param clazz class which objects are instances of
+     * @return objects after IDs has been generated
+     * @see org.sofof.ID
      * @throws org.sofof.SofofException
      */
-    public List write(List objects, String bind, Class clazz) throws SofofException;
+    public List write(List objects, String bindingName, Class clazz) throws SofofException;
 
     /**
-     * تقوم ببدء نقلة
-     * @see ListOutputStream#commite() 
+     * start a transaction
+     * @see ListOutputStream#commit() 
      */
     public void startTransaction();
 
     /**
-     * تقوم بإنهاء النقلة وتحقيقها
+     * commit the changes in the database
      * @see ListOutputStream#startTransaction() 
      */
-    public void commite();
+    public void commit();
 
     /**
-     * تقوم بإلغاء النقلة
-     * @see ListOutputStream#commite() 
+     * cancels the transaction
+     * @see ListOutputStream#commit() 
      */
     public void rollback();
     

@@ -8,23 +8,13 @@ package org.sofof.command.sorter;
 import java.io.Serializable;
 
 /**
- *الترتيب
- *
- * إما تصاعدي أو تنازلي
+ * Order of sorting ascending or descending.
+ * 
  *@author Rami Manaf Abdullah
  */
 public enum Order implements Serializable{
-        /**
-         * تنازلي
-         *
-         * @see Order#Aescending
-         */
+    
         Descending,
-        /**
-         * تصاعدي
-         *
-         * @see Order#Descending
-         */
-        Aescending;
+        Ascending;
         private static final long serialVersionUID = 87234702347l;
     }

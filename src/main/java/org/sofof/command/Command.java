@@ -6,7 +6,7 @@
 package org.sofof.command;
 
 /**
- * تحدد هذه العلامة أوامر صفوف, وبالتحديد الاستعلامات والأوامر
+ * represent commands that can be executed on the database ({@link Query}, {@link Executable})
  * @author Rami Manaf Abdullah
  */
 public interface Command {}

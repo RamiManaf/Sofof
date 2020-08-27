@@ -13,14 +13,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- *<h3>الجزء</h3>
- * <p>يستخدم لتحديد الحقول التي سيتم التقاطها</p>
+ * marks fields that will be captured
  * @author Rami Manaf Abdullah
  * @see Capture
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Particle {
+public @interface Capturable {
     
 }

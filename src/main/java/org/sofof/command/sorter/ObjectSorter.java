@@ -7,17 +7,13 @@ package org.sofof.command.sorter;
 
 import org.sofof.SofofException;
 import static org.sofof.command.ExpressionExecuter.execute;
-import org.sofof.command.condition.ObjectCondition;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * <h3>مرتب الكائنات</h3>
- *
- * يقوم بترتيب الكائنات حسب القيمة الناتجة
- * من{@link ObjectCondition النص التنفيذي} ويمكن أن تكون القيمة الناتجة نصا أو
- * رقما أو تاريخا {@link java.util.Date} {@link java.time.LocalDate} فقط
+ * Sort objects on the server based on the results of executing an expression {@link org.sofof.command.ExpressionExecuter} on objects.
+ * The result could be any object that extends {@link Comparable}.
  *
  * @author Rami Manaf Abdullah
  */
@@ -29,13 +25,13 @@ public class ObjectSorter implements Sorter, Serializable {
     private Order order;
 
     /**
-     * ترتب العناصر حسب الناتج من النص التنفيذي بالترتيب الممرر
+     * Sort objects based on executing the expression 
      *
-     * @param parameter النص التنفيذي
-     * @param order الترتيب
+     * @param expression
+     * @param order
      */
-    public ObjectSorter(String parameter, Order order) {
-        this.parameter = parameter;
+    public ObjectSorter(String expression, Order order) {
+        this.parameter = expression;
         this.order = order;
     }
 

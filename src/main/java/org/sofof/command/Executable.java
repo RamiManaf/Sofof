@@ -7,23 +7,20 @@ package org.sofof.command;
 
 import org.sofof.SofofException;
 import java.io.Serializable;
-import org.sofof.ListInputStream;
 import org.sofof.ListOutputStream;
+import org.sofof.ListInputStream;
 
 /**
- *أمر يقوم  بالتعديل على قاعدة البيانات
+ *command that can edit data in the database
  *@author Rami Manaf Abdullah
  */
 public interface Executable extends Command, Serializable{
     
     /**
-     * يتم تنفيذ الأمر في هذه الدالة بعد تمرير الكائنات
-     * اللازمة للقراءة والكتابة من وإلى قاعدة البيانات
-     * ولا يتم مناداة هذه الدالة مباشرة بل يتم مناداتها
-     * من كائن الجلسة
-     * @param in قارئ القوائم
-     * @param out كاتب القوائم
-     * @return عدد الكائنات المتأثرة من الأمر
+     * execute on the server and has the ability to edit stored data in the database using passed objects
+     * @param in lists reader from the database
+     * @param out lists writer to the database
+     * @return usually affected objects by the command
      * @throws SofofException 
      */
     public int execute(ListInputStream in, ListOutputStream out) throws SofofException;

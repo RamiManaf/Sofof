@@ -12,8 +12,8 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- *المعرف هو صف يتم استخدامه للإشارة للكائنات داخل قاعدة البيانات, إذ يتم وضعه كمعامل في أي صف وسيتم توليده عند كتابة الكائن في قاعدة البيانات, ولاسترجاعه يجب قراءة الكائن الموجود في قاعدة البيانات.
- * استخدم المعرف كعلامة مميزة فقط بين الكائنات الأخرى التي تمتلك معرفا تم توليده.
+ * This class is used to write cross binding names and classes references. You can add an ID field to a class and when an object of that class written to the database, the database will generate an ID and store it in that field. You can get the ID object by reading the stored object.
+ * You can use ID to decide equality but only when the two objects have an ID object.
  * @author Rami Manaf Abdullah
  * @see org.sofof.command.Bind
  */

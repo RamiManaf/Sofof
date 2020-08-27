@@ -12,7 +12,7 @@ import javax.servlet.jsp.tagext.TagSupport;
 
 /**
  *
- * @author LENOVO PC
+ * @author Rami Manaf Abdullah
  */
 public class LoadCaptureTag extends TagSupport {
 

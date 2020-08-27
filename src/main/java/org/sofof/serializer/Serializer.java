@@ -8,7 +8,7 @@ package org.sofof.serializer;
 import org.sofof.SofofException;
 
 /**
- *
+ * Offer converting objects to bytes and vice versa
  * @author Rami Manaf Abdullah
  */
 public interface Serializer {

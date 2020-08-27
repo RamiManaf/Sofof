@@ -11,17 +11,15 @@ import java.util.List;
 import org.sofof.ListInputStream;
 
 /**
- * استعلام يقوم بالاستعلام عن كائنات محددة
+ * Query for objects from the database
  * @author Rami Manaf Abdullah
  */
 public interface Query extends Command, Serializable{
     
     /**
-     * تنفيذ الاستعلام
-     * @param in قارئ القوائم
-     * @return تعيد خريطة مفاتيحها أسماء الصفوف التي
-     * تم الاستعلام عنها وقيمها قوائم تلك الصفوف
-     * إذا لم يكن هناك كائن مسجل ستعيد الخريطة قائمة فارغة
+     * execute the query
+     * @param in List reader from the database
+     * @return list of queried objects
      * @throws SofofException 
      */
     public List query(ListInputStream in) throws SofofException;

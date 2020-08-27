@@ -14,10 +14,7 @@ import javax.servlet.http.HttpServlet;
 import org.sofof.SessionManager;
 
 /**
- * <h3>مشغل الخادم</h3>
- * <p>
- * يقوم هذا المشغل بتشغيل الخادم بعد أن يتم ضبط ملف الweb.xml لتشغيل هذا خويدم,
- * ويتم تمرير الإعدادات الخاصة بالخادم من خلال الملف أيضا.</p>
+ * This servlet starts the Server when started using web.xml file.
  * <blockquote><pre>
  * {@code <servlet>
  *         <servlet-name>Sofof Server</servlet-name>
@@ -44,23 +41,17 @@ import org.sofof.SessionManager;
  *             <param-value>false</param-value>
  *         </init-param>
  *</servlet>}
- * وظيفة إعداد الخادم هي تنفيذ دالة configure على الخادم
- * ووظيفة إعداد الجلسات هي تنفيذ الدالة الإستاتيكية configure على قاعدة البيانات لإعداد الجلسات
  * </pre></blockquote>
- *
+ * Configure server execute the configure method on the server object and configure session execute configure method on
+ * {@link SessionManager}
+ * 
  * @author Rami Manaf Abdullah
  */
 public class SofofServlet extends HttpServlet {
 
     private static Server server;
 
-    /**
-     * <p>
-     * تقوم بتششغيل الخادم</p>
-     *
-     * @param config
-     * @throws ServletException
-     */
+    
     @Override
     public void init(ServletConfig config) throws ServletException {
         if (config.getInitParameter("path") != null) {
@@ -85,10 +76,6 @@ public class SofofServlet extends HttpServlet {
         return server;
     }
 
-    /**
-     * <p>
-     * تقوم بإغلاق الخادم</p>
-     */
     @Override
     public void destroy() {
         try {

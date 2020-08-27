@@ -17,32 +17,30 @@ import java.util.Vector;
 import java.util.regex.Pattern;
 
 /**
- * <h3>النص التنفيذي</h3>
- * يسمح النص التنفيذي بالقيام بعمليات على الكائن الممرر, ويتم ذلك من خلال تنفيذ
- * دوال الكائن وإعادة ناتج تنفيذها أو استدعاء الحقول. يجب أن يبدأ النص التنفيذي
- * بعلامة #, ويتم بعدها كتابة اسم الدالة أو الحقل, ويمكن تنفيذ نفس العمليات أيضا
- * على الحقل المستدعى أو على ما تعيد الدلة المنفذة, وذلك يتم بكتابة نقطة كما في
- * لغة جافا. وهذا مثال: #getAdmin().name.toUpperCase() ويمكن أيضا استخدام بيانات
- * جافا البدائية والنصوص لتمريرها كمعاملات للدوال
- * <table border="1" summary="التعبير عن البيانات">
+ * ExpressionExecuter offer executing expression on an object. You can call object methods or access its fields just like java syntax.
+ * The expression must start with # sign then the method name and its arguments or the field name. You can do the same thing with what 
+ * on what the method returns or on the field e.g: #getAdmin().name.toUpperCase(). You can pass primitives as arguments to methods.
+ * If you are passing objects with types different from the method parameter types you must write a character after the argument so the
+ * appropriate method could be executed (because of methods overloading).
+ * <table border="1" summary="Characters">
  * <tr>
- * <th>نوع البيانات</th>
- * <th>الرمز المعبر عنه</th>
+ * <th>Data Type</th>
+ * <th>Character</th>
  * </tr>
  * <tr>
  * <td>String</td>
  * <td>S</td>
- * <td>يجب إحاطتها بإشارة اقتباس مزدوجة</td>
+ * <td>Must be surrounded with double quotation marks</td>
  * </tr>
  * <tr>
  * <td>Character</td>
  * <td>C</td>
- * <td>يجب إحاطتها بإشارة اقتباس غير مزدوجة</td>
+ * <td>Must be surrounded with single quotation marks</td>
  * </tr>
  * <tr>
  * <td>char</td>
  * <td>c</td>
- * <td>يجب إحاطتها بإشارة اقتباس غير مزدوجة</td>
+ * <td>Must be surrounded with single quotation marks</td>
  * </tr>
  * <tr>
  * <td>int</td>
@@ -95,10 +93,10 @@ import java.util.regex.Pattern;
  * <tr>
  * <td>Object</td>
  * <td>O</td>
- * <td>يمكن استخدامه فقط مع String,Character,Float,Integer</td>
+ * <td>Could be used only with (String,Character,Float,Integer)</td>
  * </tr>
  * </table>
- * وهذا مثال: #getPlayer('String to Object arg'O, 'char'c, 2.4f)
+ * e.g: #getPlayer('String to Object arg'O, 'char'c, 2.4f)
  *
  *
  * @author Rami Manaf Abdullah

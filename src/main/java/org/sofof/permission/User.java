@@ -12,14 +12,13 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- *<h3>المستخدم</h3>
- * <p>يعبر هذا الصف عن المستخدم لعمليات تسجيل الدخول والتحقق من الصلاحيات وتحديدها.</p>
+ * Represent user object for login the database and executing commands on it
  * <blockquote><pre>
  * Server s = new Server(new File("db"), 6969, false);
- * User rami = new User("رامي", "كلمة سر");
- * s.addUser(admin);
+ * User rami = new User("rami", "password");
+ * s.getUsers().add(admin);
  * s.startUp();
- * Session sess = new Database("localhost", 6969).startSession(new User("رامي", "كلمة سر"), false);
+ * Session sess = SessionManager.startSession("sofof:localhost:6969", new User("rami", "password"), false);
  * </pre></blockquote>
  * @author Rami Manaf Abdullah
  * @see org.sofof.Server
@@ -33,9 +32,9 @@ public class User implements Serializable{
     private String password;
 
     /**
-     *<p>تنشئ مستخدما بالاسم وكلمة السر الممرران</p>
-     * @param name اسم المستخدم
-     * @param password كلمة المرور
+     * Creates a new User with the passed username and password
+     * @param name 
+     * @param password 
      */
     public User(String name, String password) {
         this.name = name;
@@ -43,8 +42,8 @@ public class User implements Serializable{
     }
 
     /**
-     *<p>تعيد اسم المستخدم</p>
-     * @return اسم المستخدم
+     * gets user name
+     * @return username
      */
     public String getName() {
         return name;

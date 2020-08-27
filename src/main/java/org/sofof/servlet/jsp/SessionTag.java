@@ -16,7 +16,7 @@ import org.sofof.SessionManager;
 
 /**
  *
- * @author LENOVO PC
+ * @author Rami Manaf Abdullah
  */
 public class SessionTag extends TagSupport {
 

@@ -21,7 +21,7 @@ import org.sofof.permission.User;
  */
 /**
  *
- * @author LENOVO PC
+ * @author Rami Manaf Abdullah
  */
 public class MultithreadedTest {
 
@@ -37,7 +37,7 @@ public class MultithreadedTest {
             int x=i;
             new Thread(() -> {
                 try {
-                    Session session = SessionManager.startSession("java:localhost:6969", rami, false);
+                    Session session = SessionManager.startSession("sofof:localhost:6969", rami, false);
                     session.execute(new Bind("wewo"));
                     System.out.println("writed "+x);
                     session.query(new Select(String.class));
@@ -50,7 +50,7 @@ public class MultithreadedTest {
             }).start();
         }
         latch.await();
-        Session session = SessionManager.startSession("java:localhost:6969", rami, false);
+        Session session = SessionManager.startSession("sofof:localhost:6969", rami, false);
         Assert.assertTrue(session.query(new Select(String.class)).size() == 100);
         session.close();
         s.shutdown();

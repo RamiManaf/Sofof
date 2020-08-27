@@ -17,7 +17,9 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.sofof.permission.User;
 import org.sofof.serializer.JavaSerializer;
+import org.sofof.serializer.JsonSerializer;
 import org.sofof.serializer.Serializer;
+import org.sofof.serializer.SofofSerializer;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
@@ -30,13 +32,24 @@ public class SessionManager {
     
     private static ArrayList<Serializer> serializers = new ArrayList<Serializer>(){{
         add(new JavaSerializer());
+        add(new SofofSerializer());
+        add(new JsonSerializer());
     }};
     private static HashMap<String, Session> sessions = new HashMap<>();
     
+    /**
+     * register a serializer so can be used in sessions referencing its name
+     * @param serializer 
+     */
     public static void registerSerializer(Serializer serializer){
         serializers.add(Objects.requireNonNull(serializer));
     }
     
+    /**
+     * removes the serializer by its name
+     * @param name
+     * @return true if removed or false if it was not found
+     */
     public static boolean removeSerializer(String name){
         for(int i=0;i<serializers.size();i++){
             if(serializers.get(i).getName().equals(name)){
@@ -51,6 +64,14 @@ public class SessionManager {
         return Collections.unmodifiableList(serializers);
     }
     
+    /**
+     * starts a new session
+     * @param url serializer:host:port
+     * @param user user name which will be used to login and execute commands
+     * @param ssl use ssl
+     * @return the new connected session
+     * @throws SofofException 
+     */
     public static Session startSession(String url, User user, boolean ssl) throws SofofException{
         String[] components = url.split(":");
         if(components.length != 3){
@@ -64,16 +85,21 @@ public class SessionManager {
         throw new SofofException("there is no serializer with the name "+components[0]);
     }
     
+    /**
+     * starts a new session
+     * @param url serializer:host:port
+     * @param user user name which will be used to login and execute commands
+     * @return the new connected session
+     * @throws SofofException 
+     */
     public static Session startSession(String url, User user) throws SofofException{
         return startSession(url, user, false);
     }
     
     /**
-     * <p>
-     * ستقوم بإعداد الجلسات من ملف</p>
-     * sofof.xml
+     * prepare sessions from xml file and starts them
      *
-     * @throws SofofException في حال حدوث خطأ دخل وخرج
+     * @throws SofofException
      */
     public static void configure() throws SofofException {
         if (SessionManager.class.getResource("/sofof.xml") != null) {
@@ -98,11 +124,10 @@ public class SessionManager {
     }
     
     /**
-     * تقوم بجلب الجلسة المقترنة باسمها من ملف sofof.xml
+     * get a session prepared in sofof.xml by its name
      *
-     * @param name اسم الجلسة في ملف sofof.xml
-     * @return الجلسة المقترنة بالاسم الممرر أو لا قيمة إذا لم يكن هناك جلسة
-     * بذلك الاسم
+     * @param name session name
+     * @return session object or null if there is no session with that name
      */
     public static Session getSession(String name) {
         return sessions.get(name);
