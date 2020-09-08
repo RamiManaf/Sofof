@@ -5,19 +5,21 @@
  */
 package org.sofof;
 
+import java.io.EOFException;
 import org.sofof.BindingNamesTree.BindClass;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.sofof.serializer.Serializer;
 
 /**
- * 
+ *
  * @author Rami Manaf Abdullah
  * @see DefaultListOutputStream
  */
@@ -56,7 +58,7 @@ public class DefaultListInputStream implements ListInputStream {
         byte[] serializedData = new byte[0];
         if (file != null) {
             try {
-                serializedData = Files.readAllBytes(file.toPath());
+                serializedData = readFile(file);
             } catch (IOException ex) {
                 throw new SofofException("unable to read data from server files", ex);
             }
@@ -66,7 +68,7 @@ public class DefaultListInputStream implements ListInputStream {
             list = new ArrayList();
         } else {
             try {
-                list = new ArrayList(Arrays.asList((Object[])serializer.deserialize(serializedData)));
+                list = new ArrayList(Arrays.asList((Object[]) serializer.deserialize(serializedData)));
             } catch (ClassNotFoundException ex) {
                 throw new SofofException("the class read is not found in the classpath");
             }
@@ -75,6 +77,24 @@ public class DefaultListInputStream implements ListInputStream {
             reloadBranches(object, sharedReferances);
         }
         return list;
+    }
+
+    private byte[] readFile(File file) throws FileNotFoundException, IOException {
+        try (FileInputStream in = new FileInputStream(file)) {
+            if(file.length() > Integer.MAX_VALUE){
+                throw new RuntimeException(file.getName() +" is too big to read");
+            }
+            byte[] data = new byte[(int) file.length()];
+            int position = 0;
+            while (position < data.length) {
+                int bytesRead = in.read(data, position, data.length - position);
+                if (bytesRead == -1) {
+                    throw new EOFException("had read only " + position + " of " + data.length + " and end of stream is reached");
+                }
+                position += bytesRead;
+            }
+            return data;
+        }
     }
 
     private void reloadBranches(Object object, List sharedReferances) throws SofofException {

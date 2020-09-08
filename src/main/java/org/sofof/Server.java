@@ -5,16 +5,18 @@
  */
 package org.sofof;
 
+import java.io.EOFException;
 import org.sofof.command.Executable;
 import org.sofof.command.Query;
 import org.sofof.permission.SofofSecurityManager;
 import org.sofof.permission.User;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -318,11 +320,29 @@ public class Server extends Thread {
 
     private void readMetaData() throws SofofException {
         try {
-            bindTree = (BindingNamesTree) serializer.deserialize(Files.readAllBytes(new File(db, "binds").toPath()));
+            bindTree = (BindingNamesTree) serializer.deserialize(readFile(new File(db, "binds")));
         } catch (IOException ex) {
             throw new SofofException("can not read meta data", ex);
         } catch (ClassNotFoundException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    private byte[] readFile(File file) throws FileNotFoundException, IOException {
+        try (FileInputStream in = new FileInputStream(file)) {
+            if(file.length() > Integer.MAX_VALUE){
+                throw new RuntimeException(file.getName() +" is too big to read");
+            }
+            byte[] data = new byte[(int) file.length()];
+            int position = 0;
+            while (position < data.length) {
+                int bytesRead = in.read(data, position, data.length - position);
+                if (bytesRead == -1) {
+                    throw new EOFException("had read only " + position + " of " + data.length + " and end of stream is reached");
+                }
+                position += bytesRead;
+            }
+            return data;
         }
     }
 

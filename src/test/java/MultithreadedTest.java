@@ -1,5 +1,6 @@
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.logging.Level;
@@ -27,21 +28,21 @@ public class MultithreadedTest {
 
     @Test
     public void testMultithreadedClients() throws SofofException, InterruptedException {
-        new File("test-db").delete();
+        deleteDir(new File("test-db"));
         CountDownLatch latch = new CountDownLatch(100);
         User rami = new User("rami", "");
         Server s = new Server(new File("test-db"), 6969, false, Arrays.asList(rami));
         s.createDatabase();
         s.startUp();
         for (int i = 0; i < 100; i++) {
-            int x=i;
+            int x = i;
             new Thread(() -> {
                 try {
                     Session session = SessionManager.startSession("sofof:localhost:6969", rami, false);
                     session.execute(new Bind("wewo"));
-                    System.out.println("writed "+x);
+                    System.out.println("writed " + x);
                     session.query(new Select(String.class));
-                    System.out.println("readed "+x);
+                    System.out.println("readed " + x);
                     session.close();
                     latch.countDown();
                 } catch (SofofException ex) {
@@ -55,4 +56,20 @@ public class MultithreadedTest {
         session.close();
         s.shutdown();
     }
+
+    private void deleteDir(File file) {
+        if (!file.exists()) {
+            return;
+        }
+        File[] contents = file.listFiles();
+        if (contents != null) {
+            for (File f : contents) {
+                if (!Files.isSymbolicLink(f.toPath())) {
+                    deleteDir(f);
+                }
+            }
+        }
+        file.delete();
+    }
+
 }
