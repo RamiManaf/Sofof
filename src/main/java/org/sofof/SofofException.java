@@ -6,8 +6,7 @@
 package org.sofof;
 
 /**
- *<h3>استثناء صفوف</h3>
- * يتم إطلاقه في حالة حدوث أي أمر غير متوقع
+ * SofofException is thrown when any error in sofof appear
  *@author Rami Manaf Abdullah
  */
 public class SofofException extends Exception{

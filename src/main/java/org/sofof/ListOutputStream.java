@@ -31,6 +31,27 @@ public interface ListOutputStream {
     public List write(List objects, String bindingName, Class clazz) throws SofofException;
 
     /**
+     * add the objects list to the database
+     *
+     * @param objects
+     * @param bindingName
+     * @param clazz class which objects are instances of
+     * @return objects after IDs has been generated
+     * @see org.sofof.ID
+     * @throws org.sofof.SofofException
+     */
+    public List add(List objects, String bindingName, Class clazz) throws SofofException;
+    
+    /**
+     * Create a {@link SequentialWriter}.
+     * @param bindingName
+     * @param clazz
+     * @return new Sequential writer for the bindingName and class passed
+     * @throws SofofException 
+     */
+    public SequentialWriter createSequentialWriter(String bindingName, Class clazz) throws SofofException;
+
+    /**
      * start a transaction
      * @see ListOutputStream#commit() 
      */

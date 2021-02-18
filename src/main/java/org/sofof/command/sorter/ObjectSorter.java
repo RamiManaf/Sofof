@@ -24,6 +24,8 @@ public class ObjectSorter implements Sorter, Serializable {
     private String parameter;
     private Order order;
 
+    private ObjectSorter(){}
+    
     /**
      * Sort objects based on executing the expression 
      *

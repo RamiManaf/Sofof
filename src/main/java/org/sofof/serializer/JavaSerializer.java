@@ -5,15 +5,16 @@
  */
 package org.sofof.serializer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import org.sofof.SofofException;
 
 /**
  * Use the java API to serialize objects.
+ *
  * @author Rami Manaf Abdullah
  */
 public class JavaSerializer implements Serializer {
@@ -24,19 +25,19 @@ public class JavaSerializer implements Serializer {
     }
 
     @Override
-    public byte[] serialize(Object obj) throws SofofException {
-        ByteArrayOutputStream writingBytes = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(writingBytes)) {
+    public void serialize(Object obj, OutputStream o) throws SofofException {
+        try {
+            ObjectOutputStream out = new ObjectOutputStream(o);
             out.writeObject(obj);
-            return writingBytes.toByteArray();
         } catch (IOException ex) {
             throw new SofofException(ex);
         }
     }
+
     @Override
-    public Object deserialize(byte[] bytes) throws SofofException, ClassNotFoundException {
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes))) {
-            return in.readObject();
+    public Object deserialize(InputStream in) throws SofofException, ClassNotFoundException {
+        try ( ObjectInputStream ois = new ObjectInputStream(in)) {
+            return ois.readObject();
         } catch (IOException ex) {
             throw new SofofException(ex);
         }

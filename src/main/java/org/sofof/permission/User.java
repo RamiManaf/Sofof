@@ -31,6 +31,8 @@ public class User implements Serializable{
     private String name;
     private String password;
 
+    private User(){}
+    
     /**
      * Creates a new User with the passed username and password
      * @param name 

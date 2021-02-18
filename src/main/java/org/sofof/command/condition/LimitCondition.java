@@ -17,6 +17,8 @@ public class LimitCondition implements Condition {
     private int limit;
     private int offset;
 
+    private LimitCondition(){}
+    
     /**
      * Apply only to the passed number of objects
      * @param limit number of objects that this condition apply on

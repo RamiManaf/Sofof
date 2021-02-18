@@ -31,6 +31,8 @@ public class ObjectCondition implements Condition, Serializable {
     private Object side2;
     private Operation operation;
 
+    private ObjectCondition() {}
+    
     /**
      * You can pass objects or expressions to be executed on database objects and finally preform the relational operation on them
      *

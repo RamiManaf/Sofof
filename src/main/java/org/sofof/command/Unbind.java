@@ -8,13 +8,13 @@ package org.sofof.command;
 import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Objects;
 import org.sofof.ListOutputStream;
 import org.sofof.ListInputStream;
+import org.sofof.SequentialReader;
+import org.sofof.SequentialWriter;
 
 /**
  * unbind (delete) objects bound to a specific binding name
@@ -33,6 +33,9 @@ public class Unbind implements Executable, Serializable {
     private List<Class> classes;
     private Condition condition;
 
+    private Unbind() {
+    }
+
     /**
      * unbind all objects of the passed classes
      *
@@ -45,7 +48,7 @@ public class Unbind implements Executable, Serializable {
     /**
      * unbind passed objects by checking equality with stored objects
      *
-     * @param objs 
+     * @param objs
      */
     public Unbind(Object... objs) {
         this(Arrays.asList(objs));
@@ -54,14 +57,16 @@ public class Unbind implements Executable, Serializable {
     /**
      * unbind passed objects by checking equality with stored objects
      *
-     * @param objs 
+     * @param objs
      */
     public Unbind(List objs) {
         objects = new LinkedList<>(objs);
     }
-    
+
     /**
-     * Specify the binding name that objects are bound to. If the name is empty space filled strings or null then the name will be converted to SofofNoName.
+     * Specify the binding name that objects are bound to. If the name is empty
+     * space filled strings or null then the name will be converted to
+     * SofofNoName.
      *
      * @param bind binding name
      * @return this object
@@ -72,7 +77,8 @@ public class Unbind implements Executable, Serializable {
     }
 
     /**
-     * Add a condition that objects must meet it to unbind them. Only apply if you choose the constructor with classes argument.
+     * Add a condition that objects must meet it to unbind them. Only apply if
+     * you choose the constructor with classes argument.
      *
      * @param condition
      * @return this object
@@ -87,29 +93,33 @@ public class Unbind implements Executable, Serializable {
         int affected = 0;
         if (classes != null) {
             for (Class clazz : classes) {
-                List list = in.read(bind, clazz);
-                for (Object element : new ArrayList(list)) {
-                    if (condition == null || condition.check(element)) {
-                        list.remove(element);
-                        affected++;
+                try ( SequentialWriter writer = out.createSequentialWriter(bind, clazz);  SequentialReader reader = in.createSequentialReader(bind, clazz)) {
+                    Object obj;
+                    while ((obj = reader.read()) != null) {
+                        if (condition != null && condition.check(obj)) {
+                            writer.write(obj);
+                            affected++;
+                        }
                     }
+                } catch (Exception ex) {
+                    throw new SofofException(ex);
                 }
-                out.write(list, bind, clazz);
             }
         } else {
             if (objects.isEmpty()) {
-                throw new SofofException("no objects passed to unbind");
+                return 0;
             }
-            List list = in.read(bind, objects.get(0).getClass());
-            for (Object obj : objects) {
-                for (Object listObj : list) {
-                    if (Objects.equals(obj, listObj)) {
-                        list.remove(listObj);
+            try ( SequentialWriter writer = out.createSequentialWriter(bind, objects.get(0).getClass());  SequentialReader reader = in.createSequentialReader(bind, objects.get(0).getClass())) {
+                Object obj;
+                while ((obj = reader.read()) != null) {
+                    if (!objects.contains(obj)) {
+                        writer.write(obj);
                         affected++;
                     }
                 }
+            } catch (Exception ex) {
+                throw new SofofException(ex);
             }
-            out.write(list, bind, objects.get(0).getClass());
         }
         return affected;
     }

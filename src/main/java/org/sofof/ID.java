@@ -25,6 +25,8 @@ public class ID implements Serializable{
     private Class clazz;
     private int id;
 
+    private ID(){}
+    
     public ID(String bind, Class clazz, int id) {
         this.bind = bind;
         this.clazz = clazz;

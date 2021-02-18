@@ -5,16 +5,17 @@
  */
 package org.sofof;
 
+import java.io.BufferedInputStream;
 import java.io.EOFException;
-import org.sofof.BindingNamesTree.BindClass;
+import org.sofof.BindingNamesTree.BindingClass;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.sofof.serializer.Serializer;
 
@@ -45,32 +46,27 @@ public class DefaultListInputStream implements ListInputStream {
      * {@inheritDoc}
      */
     @Override
-    public List read(String bind, Class c) throws SofofException {
-        return read(bind, c, null);
+    public List readAll(String bind, Class c) throws SofofException {
+        return readAll(bind, c, null);
     }
 
-    private List read(String bind, Class c, List sharedReferances) throws SofofException {
-        if (bind == null || bind.isEmpty()) {
-            bind = "SofofNoName";
+    private List readAll(String bindingName, Class c, List sharedReferances) throws SofofException {
+        if (bindingName == null || bindingName.isEmpty()) {
+            bindingName = "SofofNoName";
         }
-        BindClass bc = bindTree.getBind(bind).getBindClass(c);
+        BindingClass bc = bindTree.getBindingName(bindingName).getBindingClass(c);
         File file = bc.getStorageFile();
-        byte[] serializedData = new byte[0];
+        ArrayList list = new ArrayList();
         if (file != null) {
-            try {
-                serializedData = readFile(file);
-            } catch (IOException ex) {
-                throw new SofofException("unable to read data from server files", ex);
-            }
-        }
-        ArrayList list;
-        if (serializedData.length == 0) {
-            list = new ArrayList();
-        } else {
-            try {
-                list = new ArrayList(Arrays.asList((Object[]) serializer.deserialize(serializedData)));
+            try ( FileInputStream in = new FileInputStream(file)) {
+                Object object;
+                while ((object = serializer.deserialize(in)) != null) {
+                    list.add(object);
+                }
             } catch (ClassNotFoundException ex) {
                 throw new SofofException("the class read is not found in the classpath");
+            } catch (IOException ex) {
+                throw new SofofException("unable to read data from server files", ex);
             }
         }
         for (Object object : list) {
@@ -79,10 +75,21 @@ public class DefaultListInputStream implements ListInputStream {
         return list;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SequentialReader createSequentialReader(String bindingName, Class clazz) throws SofofException {
+        if (bindingName == null || bindingName.isEmpty()) {
+            bindingName = "SofofNoName";
+        }
+        return new DefaultSequentialReader(bindingName, clazz);
+    }
+
     private byte[] readFile(File file) throws FileNotFoundException, IOException {
-        try (FileInputStream in = new FileInputStream(file)) {
-            if(file.length() > Integer.MAX_VALUE){
-                throw new RuntimeException(file.getName() +" is too big to read");
+        try ( FileInputStream in = new FileInputStream(file)) {
+            if (file.length() > Integer.MAX_VALUE) {
+                throw new RuntimeException(file.getName() + " is too big to read");
             }
             byte[] data = new byte[(int) file.length()];
             int position = 0;
@@ -162,13 +169,53 @@ public class DefaultListInputStream implements ListInputStream {
     }
 
     private Object getObjectByID(ID id) throws SofofException {
-        List matches = read(id.getBind(), id.getClazz());
+        List matches = readAll(id.getBind(), id.getClazz());
         for (Object match : matches) {
             if (getBaseID(match).equals(id)) {
                 return match;
             }
         }
         return null;
+    }
+
+    private class DefaultSequentialReader implements SequentialReader {
+
+        private String bindingName;
+        private Class clazz;
+        private InputStream in;
+
+        public DefaultSequentialReader(String bindingName, Class clazz) throws SofofException {
+            this.bindingName = bindingName;
+            this.clazz = clazz;
+            BindingClass bc = bindTree.getBindingName(bindingName).getBindingClass(clazz);
+            File file = bc.getStorageFile();
+            if(file != null){
+                try {
+                    in = new BufferedInputStream(new FileInputStream(file));
+                } catch (FileNotFoundException ex) {
+                    throw new SofofException(ex);
+                }
+            }
+        }
+
+        @Override
+        public Object read() throws SofofException {
+            try {
+                if(in == null)return null;
+                Object obj = serializer.deserialize(in);
+                reloadBranches(obj, null);
+                return obj;
+            } catch (ClassNotFoundException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            if(in!=null)
+            in.close();
+        }
+
     }
 
 }

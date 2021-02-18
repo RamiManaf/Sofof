@@ -14,7 +14,6 @@ import java.util.List;
 public interface ListInputStream {
 
     /**
-     * /**
      * reads objects of the passed class bound to the passed binding name
      * {@code 
      * List list = in.read("students", Student.class);
@@ -26,6 +25,15 @@ public interface ListInputStream {
      * @return return a list of the objects had been read
      * @throws SofofException
      */
-    public List read(String bindingName, Class c) throws SofofException;
+    public List readAll(String bindingName, Class c) throws SofofException;
+    
+    /**
+     * Create a {@link SequentialReader}.
+     * @param bindingName
+     * @param clazz
+     * @return new Sequential reader for the bindingName and class passed
+     * @throws SofofException 
+     */
+    public SequentialReader createSequentialReader(String bindingName, Class clazz) throws SofofException;
 
 }

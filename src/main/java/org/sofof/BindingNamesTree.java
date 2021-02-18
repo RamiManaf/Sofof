@@ -23,7 +23,7 @@ public class BindingNamesTree implements Serializable {
 
     private static final long serialVersionUID = 725607124l;
 
-    private ArrayList<BindingName> binds;
+    private ArrayList<BindingName> bindingNames;
 
     /**
      * binding name
@@ -33,8 +33,10 @@ public class BindingNamesTree implements Serializable {
         private static final long serialVersionUID = 7980792384l;
 
         private String name;
-        private ArrayList<BindClass> classes;
+        private ArrayList<BindingClass> classes;
 
+        private BindingName(){}
+        
         /**
          *
          * @param name binding name
@@ -56,67 +58,58 @@ public class BindingNamesTree implements Serializable {
          *
          * @return classes bound to this binding name
          */
-        public List<BindClass> getClasses() {
+        public List<BindingClass> getClasses() {
             return new ArrayList<>(classes);
         }
 
         /**
          * return BindClass object for the passed class. If there is no BindClass with this class the method will create new one
-         * @param c class which you want to get his BindClass object
-         * @return BindClass
+         * @param c class which you want to get his BindingClass object
+         * @return BindingClass
          */
-        public BindClass getBindClass(Class c) {
-            for (BindClass bindClass : classes) {
+        public BindingClass getBindingClass(Class c) {
+            for (BindingClass bindClass : classes) {
                 if (bindClass.getClazz().equals(c)) {
                     return bindClass;
                 }
             }
-            BindClass bc = new BindClass(this, c);
+            BindingClass bc = new BindingClass(c);
             classes.add(bc);
             return bc;
         }
 
         private void writeObject(ObjectOutputStream out) throws IOException {
             out.writeUTF(name);
-            out.writeObject(classes.toArray(new BindClass[classes.size()]));
+            out.writeObject(classes.toArray(new BindingClass[classes.size()]));
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             name = in.readUTF();
-            classes = new ArrayList(Arrays.asList((BindClass[])in.readObject()));
+            classes = new ArrayList(Arrays.asList((BindingClass[])in.readObject()));
         }
 
     }
 
-    public static class BindClass implements Serializable {
+    public static class BindingClass implements Serializable {
 
         private static final long serialVersionUID = -8986234l;
 
-        private BindingName bind;
         private Class clazz;
         private File storageFile;
 
+        private BindingClass(){}
+        
         /**
          *
-         * @param bind binding name which this object will be bound to
          * @param c class bound to the binding name
          */
-        public BindClass(BindingName bind, Class c) {
-            this.bind = bind;
+        public BindingClass(Class c) {
             this.clazz = c;
         }
 
         /**
-         *
-         * @return binding name which this class is linked to
-         */
-        public BindingName getBind() {
-            return bind;
-        }
-
-        /**
          * 
-         * @return class object associated to this BindClass
+         * @return class object associated to this BindingClass
          */
         public Class getClazz() {
             return clazz;
@@ -139,13 +132,11 @@ public class BindingNamesTree implements Serializable {
         }
 
         private void writeObject(ObjectOutputStream out) throws IOException {
-            out.writeObject(bind);
             out.writeObject(clazz);
             out.writeObject(storageFile);
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-            bind = (BindingName) in.readObject();
             clazz = (Class) in.readObject();
             storageFile = (File) in.readObject();
         }
@@ -153,7 +144,7 @@ public class BindingNamesTree implements Serializable {
     }
 
     public BindingNamesTree() {
-        binds = new ArrayList<>();
+        bindingNames = new ArrayList<>();
     }
 
     /**
@@ -161,11 +152,11 @@ public class BindingNamesTree implements Serializable {
      * @param bind binding name to be added
      */
     public synchronized void addBind(BindingName bind) {
-        binds.add(bind);
+        bindingNames.add(bind);
     }
 
-    public List<BindingName> getBinds() {
-        return binds;
+    public List<BindingName> getBindingNames() {
+        return bindingNames;
     }
 
     /**
@@ -174,8 +165,8 @@ public class BindingNamesTree implements Serializable {
      * @param bindName
      * @return
      */
-    public BindingName getBind(String bindName) {
-        for (BindingName bind : binds) {
+    public BindingName getBindingName(String bindName) {
+        for (BindingName bind : bindingNames) {
             if (bind.getName().equals(bindName)) {
                 return bind;
             }
@@ -186,11 +177,11 @@ public class BindingNamesTree implements Serializable {
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeObject(binds.toArray(new BindingName[binds.size()]));
+        out.writeObject(bindingNames.toArray(new BindingName[bindingNames.size()]));
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        binds = new ArrayList<>(Arrays.asList((BindingName[])in.readObject()));
+        bindingNames = new ArrayList<>(Arrays.asList((BindingName[])in.readObject()));
     }
 
 }

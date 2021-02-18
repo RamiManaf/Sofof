@@ -18,6 +18,8 @@ public class BooleanCondition implements Condition, Serializable{
     
     private boolean condition;
     
+    private BooleanCondition(){}
+    
     /**
      * 
      * @param condition 

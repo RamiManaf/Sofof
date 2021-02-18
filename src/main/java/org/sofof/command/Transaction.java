@@ -19,6 +19,9 @@ public class Transaction implements Executable {
 
     private List<Executable> executables;
 
+    private Transaction() {
+    }
+    
     /**
      * execute all executables as a transaction
      * @param executables 

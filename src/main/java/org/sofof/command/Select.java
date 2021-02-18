@@ -11,9 +11,9 @@ import org.sofof.command.sorter.Sorter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import org.sofof.ListInputStream;
+import org.sofof.SequentialReader;
 
 /**
  * Can query for objects with certain conditions and in sorting way
@@ -31,10 +31,13 @@ public class Select implements Query, Serializable {
     private Sorter sorter;
     private boolean shuffle;
 
+    private Select() {
+    }
+
     /**
      * Query for all objects of that class
      *
-     * @param c 
+     * @param c
      */
     public Select(Class c) {
         this(c, null);
@@ -46,8 +49,9 @@ public class Select implements Query, Serializable {
      * List marks = session.query(new Select(Student.class, "#getMark()"));
      * </pre></blockquote>
      *
-     * @param c 
-     * @param expression expression that will be executed on the selected objects
+     * @param c
+     * @param expression expression that will be executed on the selected
+     * objects
      * @see ExpressionExecuter
      */
     public Select(Class c, String expression) {
@@ -60,9 +64,12 @@ public class Select implements Query, Serializable {
      * List marks = session.query(new Select(Student.class, "#getMark()"));
      * </pre></blockquote>
      *
-     * @param c 
-     * @param expression expression that will be executed on the selected objects
-     * @param shuffle if true the query will shuffle the data before applying conditions to it. This is useful if you want to select limited random objects.
+     * @param c
+     * @param expression expression that will be executed on the selected
+     * objects
+     * @param shuffle if true the query will shuffle the data before applying
+     * conditions to it. This is useful if you want to select limited random
+     * objects.
      * @see ExpressionExecuter
      */
     public Select(Class c, String expression, boolean shuffle) {
@@ -72,7 +79,9 @@ public class Select implements Query, Serializable {
     }
 
     /**
-     * Specify the binding name that objects are bound to. If the name is empty space filled strings or null then the name will be converted to SofofNoName
+     * Specify the binding name that objects are bound to. If the name is empty
+     * space filled strings or null then the name will be converted to
+     * SofofNoName
      *
      * @param bind binding name
      * @return this object
@@ -106,20 +115,35 @@ public class Select implements Query, Serializable {
 
     @Override
     public List query(ListInputStream in) throws SofofException {
-        List objs = in.read(bind, clazz);
-        if(shuffle)Collections.shuffle(objs);
-        if (condition != null) {
-            for (Object obj : new ArrayList(objs)) {
-                if (!condition.check(obj)) {
-                    objs.remove(obj);
+        List objs;
+        if (shuffle || condition == null) {
+            objs = in.readAll(bind, clazz);
+            Collections.shuffle(objs);
+            if (condition != null) {
+                for (Object obj : new ArrayList(objs)) {
+                    if (!condition.check(obj)) {
+                        objs.remove(obj);
+                    }
                 }
+            }
+        } else {
+            objs = new ArrayList();
+            Object obj;
+            try (SequentialReader reader = in.createSequentialReader(bind, clazz)) {
+                while ((obj = reader.read()) != null) {
+                    if (condition.check(obj)) {
+                        objs.add(obj);
+                    }
+                }
+            }catch(Exception ex){
+                throw new SofofException(ex);
             }
         }
         if (sorter != null) {
             sorter.sort(objs);
         }
         if (expression != null) {
-            LinkedList result = new LinkedList();
+            ArrayList result = new ArrayList();
             for (Object obj : objs) {
                 result.add(ExpressionExecuter.execute(expression, obj));
             }

@@ -8,10 +8,10 @@ package org.sofof.command;
 import org.sofof.SofofException;
 import org.sofof.command.condition.Condition;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Objects;
 import org.sofof.ListOutputStream;
 import org.sofof.ListInputStream;
+import org.sofof.SequentialReader;
+import org.sofof.SequentialWriter;
 
 /**
  * Update objects with new ones
@@ -27,6 +27,9 @@ public class Update implements Executable, Serializable {
     private String bind;
     private Class clazz;
     private Condition condition;
+
+    private Update() {
+    }
 
     /**
      * Updates objects with the specified class
@@ -47,7 +50,9 @@ public class Update implements Executable, Serializable {
     }
 
     /**
-     * Specify the binding name that objects are bound to. If the name is empty space filled strings or null then the name will be converted to SofofNoName.
+     * Specify the binding name that objects are bound to. If the name is empty
+     * space filled strings or null then the name will be converted to
+     * SofofNoName.
      *
      * @param bind binding name
      * @return this object
@@ -69,9 +74,10 @@ public class Update implements Executable, Serializable {
     }
 
     /**
-     * Add a condition that will be applied on objects to update them. Only for the constructor with class argument.
+     * Add a condition that will be applied on objects to update them. Only for
+     * the constructor with class argument.
      *
-     * @param condition 
+     * @param condition
      * @return this object
      */
     public Update where(Condition condition) {
@@ -83,23 +89,33 @@ public class Update implements Executable, Serializable {
     public int execute(ListInputStream in, ListOutputStream out) throws SofofException {
         int affected = 0;
         if (clazz != null) {
-            List list = in.read(bind, clazz);
-            for (int x = 0; x < list.size(); x++) {
-                if (condition == null || condition.check(list.get(x))) {
-                    list.set(x, update);
-                    affected++;
+            try ( SequentialWriter writer = out.createSequentialWriter(bind, clazz);  SequentialReader reader = in.createSequentialReader(bind, clazz)) {
+                Object obj;
+                while ((obj = reader.read()) != null) {
+                    if (condition == null || condition.check(obj)) {
+                        writer.write(update);
+                        affected++;
+                    } else {
+                        writer.write(obj);
+                    }
                 }
+            } catch (Exception ex) {
+                throw new SofofException(ex);
             }
-            out.write(list, bind, clazz);
         } else {
-            List list = in.read(bind, object.getClass());
-            for (int x = 0; x < list.size(); x++) {
-                if (Objects.equals(list.get(x), object)) {
-                    list.set(x, update);
-                    affected++;
+            Object obj;
+            try (SequentialWriter writer = out.createSequentialWriter(bind, object.getClass()); SequentialReader reader = in.createSequentialReader(bind, object.getClass())) {
+                while((obj = reader.read())!=null){
+                    if (obj.equals(object)) {
+                        writer.write(object);
+                        affected++;
+                    } else {
+                        writer.write(obj);
+                    }
                 }
+            } catch (Exception ex) {
+                throw new SofofException(ex);
             }
-            out.write(list, bind, object.getClass());
         }
         return affected;
     }

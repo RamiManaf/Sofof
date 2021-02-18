@@ -5,6 +5,8 @@
  */
 package org.sofof.serializer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import org.junit.BeforeClass;
@@ -27,24 +29,31 @@ public class SerializerTest {
     public void testPrimitives() throws Exception {
         for (Serializer s : serializers) {
             PrimitivesTest expected = new PrimitivesTest().assignValues();
-            PrimitivesTest p = (PrimitivesTest) s.deserialize(s.serialize(new PrimitivesTest().assignValues()));
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            s.serialize(new PrimitivesTest().assignValues(), out);
+            PrimitivesTest p = (PrimitivesTest) s.deserialize(new ByteArrayInputStream(out.toByteArray()));
             assertEquals(expected, p);
         }
     }
 
     @Test
     public void testArray() throws Exception {
-        SofofSerializer s = new SofofSerializer();
-        ArrayTest expected = new ArrayTest().assignValues();
-        ArrayTest p = (ArrayTest) s.deserialize(s.serialize(new ArrayTest().assignValues()));
-        assertEquals(expected, p);
+        for (Serializer s : serializers) {
+            ArrayTest expected = new ArrayTest().assignValues();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            s.serialize(new ArrayTest().assignValues(), out);
+            ArrayTest p = (ArrayTest) s.deserialize(new ByteArrayInputStream(out.toByteArray()));
+            assertEquals(expected, p);
+        }
     }
 
     @Test
     public void testReference() throws Exception {
         for (Serializer s : serializers) {
             ReferenceTest expected = new ReferenceTest().assignValues();
-            ReferenceTest p = (ReferenceTest) s.deserialize(s.serialize(new ReferenceTest().assignValues()));
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            s.serialize(new ReferenceTest().assignValues(), out);
+            ReferenceTest p = (ReferenceTest) s.deserialize(new ByteArrayInputStream(out.toByteArray()));
             assertEquals(expected, p);
         }
     }

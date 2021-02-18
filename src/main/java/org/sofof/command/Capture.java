@@ -48,6 +48,9 @@ public class Capture implements Serializable {
     private Object obj;
     private long time;
     private Map<String, Object> fields;
+
+    private Capture() {
+    }
     
     private Capture(Object obj) throws SofofException {
         fields = new HashMap<>();

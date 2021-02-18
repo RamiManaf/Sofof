@@ -10,16 +10,15 @@ import java.io.OutputStream;
 import org.sofof.SofofException;
 
 /**
- * Offer converting objects to bytes and vice versa
+ *
  * @author Rami Manaf Abdullah
  */
-public interface Serializer {
-    
-    public String getName();
-    
-    public void serialize(Object obj, OutputStream out) throws SofofException;
-    
-    public Object deserialize(InputStream in) throws SofofException, ClassNotFoundException;
-    
-    
+public interface ClassSpecificSerializer<T> {
+
+    public Class<T> getClazz();
+
+    public void serialize(Serializer serializer, T obj, OutputStream out) throws SofofException;
+
+    public T deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException;
+
 }

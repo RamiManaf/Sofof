@@ -5,6 +5,7 @@
  */
 package org.sofof;
 
+import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import org.sofof.command.Executable;
 import org.sofof.command.Query;
@@ -40,7 +41,8 @@ import org.xml.sax.SAXException;
  * Server s = new Server(new File("db"), 6969, false);
  * s.startUp();
  * </pre></blockquote>
- * you can configure the server using xml files. The file should have the sofof.xml name and should be placed in the default package
+ * you can configure the server using xml files. The file should have the
+ * sofof.xml name and should be placed in the default package
  *
  * @author Rami Manaf Abdullah
  * @see User
@@ -59,11 +61,17 @@ public class Server extends Thread {
     private List<User> users;
     private List<String> clients;
     private ReentrantReadWriteLock readWriteLock;
+    private SofofSecurityManager securityManager;
 
     public Server() {
         this(null);
     }
 
+    /**
+     * creates a new local server with no ssl
+     *
+     * @param db database folder
+     */
     public Server(File db) {
         this(db, -1, false);
     }
@@ -71,7 +79,8 @@ public class Server extends Thread {
     /**
      *
      * @param db database folder
-     * @param port port which the server will listen to sessions requests. pass -1 for using Server locally
+     * @param port port which the server will listen to sessions requests. pass
+     * -1 for using Server locally
      * @param ssl use ssl
      */
     public Server(File db, int port, boolean ssl) {
@@ -81,17 +90,20 @@ public class Server extends Thread {
     /**
      *
      * @param db database folder
-     * @param port port which the server will listen to sessions requests. pass -1 for using Server locally
+     * @param port port which the server will listen to sessions requests. pass
+     * -1 for using Server locally
      * @param ssl use ssl
      * @param users users list
      */
     public Server(File db, int port, boolean ssl, List<User> users) {
         this(db, port, ssl, users, new SofofSerializer());
     }
+
     /**
      *
      * @param db database folder
-     * @param port port which the server will listen to sessions requests. pass -1 for using Server locally
+     * @param port port which the server will listen to sessions requests. pass
+     * -1 for using Server locally
      * @param ssl use ssl
      * @param users users list
      * @param serializer serializer that will be used for communication
@@ -105,12 +117,27 @@ public class Server extends Thread {
         readWriteLock = new ReentrantReadWriteLock(true);
     }
 
+    /**
+     * set the security manager instance that will be used by this server to
+     * check the accessibility for users on the database
+     *
+     * @param securityManager
+     */
+    public void setSecurityManager(SofofSecurityManager securityManager) {
+        this.securityManager = securityManager;
+    }
+
+    /**
+     * return the serializer used in this server
+     *
+     * @return
+     */
     public Serializer getSerializer() {
         return serializer;
     }
 
     /**
-     * 
+     *
      * @return allowed users list
      */
     public List<User> getUsers() {
@@ -118,8 +145,9 @@ public class Server extends Thread {
     }
 
     /**
-     * 
-     * @return allowed hosts list or null if there is no restriction on hosts that will use the database
+     *
+     * @return allowed hosts list or null if there is no restriction on hosts
+     * that will use the database
      */
     public List<String> getClients() {
         return clients;
@@ -127,7 +155,8 @@ public class Server extends Thread {
 
     /**
      * changes the serializer
-     * @param serializer 
+     *
+     * @param serializer
      */
     public void setSerializer(Serializer serializer) {
         this.serializer = Objects.requireNonNull(serializer);
@@ -135,15 +164,18 @@ public class Server extends Thread {
 
     /**
      * sets a new allowed users list
-     * @param users 
+     *
+     * @param users
      */
     public void setUsers(List<User> users) {
         this.users = Objects.requireNonNull(users);
     }
 
     /**
-     * sets hosts or ip addresses of the allowed hosts to connect to the database
-     * @param clients 
+     * sets hosts or ip addresses of the allowed hosts to connect to the
+     * database
+     *
+     * @param clients
      */
     public void setClients(List<String> clients) {
         this.clients = clients;
@@ -224,7 +256,7 @@ public class Server extends Thread {
         @Override
         public void run() {
             try {
-                user = (User) Session.readObject(client.getInputStream(), serializer);
+                user = (User) serializer.deserialize(client.getInputStream());
                 if (users.contains(user)) {
                     user = users.get(users.indexOf(user));
                     client.getOutputStream().write(Session.BOOLEAN_TRUE);
@@ -240,33 +272,35 @@ public class Server extends Thread {
                     if (type == -1) {
                         break;
                     }
-                    Object obj = Session.readObject(client.getInputStream(), serializer);
+                    Object obj = serializer.deserialize(client.getInputStream());
                     if (type == Session.COMMAND_EXECUTABLE) {
                         Lock lock = readWriteLock.writeLock();
                         try {
                             lock.lock();
                             checkExecutingPermission(user, (Executable) obj);
-                            Session.writeObjct(client.getOutputStream(), serializer, ((Executable) obj).execute(in, out));
+                            serializer.serialize(((Executable) obj).execute(in, out), client.getOutputStream());
+                            commit();
                         } catch (SofofException | SecurityException ex) {
-                            Session.writeObjct(client.getOutputStream(), serializer, ex);
+                            serializer.serialize(ex, client.getOutputStream());
+                            throw ex;
                         } finally {
                             lock.unlock();
                         }
-                        commit();
                     } else if (type == Session.COMMAND_QUERY) {
                         Lock lock = readWriteLock.readLock();
                         try {
                             lock.lock();
                             checkQueryingPermission(user, (Query) obj);
-                            Session.writeObjct(client.getOutputStream(), serializer, ((Query) obj).query(in));
+                            serializer.serialize(((Query) obj).query(in), client.getOutputStream());
                         } catch (SofofException | SecurityException ex) {
-                            Session.writeObjct(client.getOutputStream(), serializer, ex);
+                            serializer.serialize(ex, client.getOutputStream());
+                            throw ex;
                         } finally {
                             lock.unlock();
                         }
                     }
                 }
-            } catch (IOException | SofofException ex) {
+            } catch (IOException | SofofException | ClassNotFoundException ex) {
                 LOGGER.log(Level.SEVERE, null, ex);
             } finally {
                 try {
@@ -320,18 +354,18 @@ public class Server extends Thread {
 
     private void readMetaData() throws SofofException {
         try {
-            bindTree = (BindingNamesTree) serializer.deserialize(readFile(new File(db, "binds")));
+            bindTree = (BindingNamesTree) serializer.deserialize(new ByteArrayInputStream(readFile(new File(db, "binds"))));
         } catch (IOException ex) {
             throw new SofofException("can not read meta data", ex);
         } catch (ClassNotFoundException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
         }
     }
-    
+
     private byte[] readFile(File file) throws FileNotFoundException, IOException {
-        try (FileInputStream in = new FileInputStream(file)) {
-            if(file.length() > Integer.MAX_VALUE){
-                throw new RuntimeException(file.getName() +" is too big to read");
+        try ( FileInputStream in = new FileInputStream(file)) {
+            if (file.length() > Integer.MAX_VALUE) {
+                throw new RuntimeException(file.getName() + " is too big to read");
             }
             byte[] data = new byte[(int) file.length()];
             int position = 0;
@@ -351,9 +385,9 @@ public class Server extends Thread {
      *
      * @throws SofofException
      */
-    private synchronized void commit() throws SofofException {
+    private void commit() throws SofofException {
         try ( FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
-            out.write(serializer.serialize(bindTree));
+            serializer.serialize(bindTree, out);
             out.flush();
         } catch (IOException ex) {
             throw new SofofException("can not save changes to meta ", ex);
@@ -371,69 +405,24 @@ public class Server extends Thread {
         return this;
     }
 
-    private static void checkExecutingPermission(User user, Executable exe) throws SofofException {
-        if (System.getSecurityManager() != null
-                && SofofSecurityManager.class.isAssignableFrom(System.getSecurityManager().getClass())) {
-            ((SofofSecurityManager) System.getSecurityManager()).checkExecutable(user, exe);
+    private void checkExecutingPermission(User user, Executable exe) throws SofofException {
+        if (securityManager != null) {
+            securityManager.checkExecutable(user, exe);
         }
     }
 
-    private static void checkQueryingPermission(User user, Query query) throws SofofException {
-        if (System.getSecurityManager() != null
-                && SofofSecurityManager.class.isAssignableFrom(System.getSecurityManager().getClass())) {
-            ((SofofSecurityManager) System.getSecurityManager()).checkQuery(user, query);
+    private void checkQueryingPermission(User user, Query query) throws SofofException {
+        if (securityManager != null) {
+            securityManager.checkQuery(user, query);
         }
-    }
-
-    /**
-     * use this method only if this server is local (port=-1)
-     *
-     * @param exe
-     * @return usually affected objects
-     * @throws SofofException
-     */
-    public int execute(Executable exe) throws SofofException {
-        if (!internal) {
-            throw new SofofException("unauthenticated execute for an  external server has been blocked");
-        }
-        Lock lock = readWriteLock.writeLock();
-        int result = 0;
-        try {
-            lock.lock();
-            result = exe.execute(new DefaultListInputStream(db, bindTree, serializer), new DefaultListOutputStream(db, bindTree, serializer));
-        } finally {
-            lock.unlock();
-        }
-        commit();
-        return result;
     }
 
     /**
-     * use this method only if this server is local (port=-1)
+     * creates a new database folder and binds file. if there is an existing
+     * folder this method will not do anything
      *
-     * @param query 
-     * @return list of queried objects
-     * @throws SofofException
-     */
-    public List query(Query query) throws SofofException {
-        if (!internal) {
-            throw new SofofException("unauthenticated query for an  external server has been blocked");
-        }
-        Lock lock = readWriteLock.readLock();
-        List result;
-        try{
-            lock.lock();
-            result = query.query(new DefaultListInputStream(db, bindTree, serializer));
-        }finally{
-            lock.unlock();
-        }
-        return result;
-    }
-
-    /**
-     * creates a new database folder and binds file. if there is an existing folder this method will not do anything
-     *
-     * @return true if a new database is created successfully and false if there is a folder with the same name
+     * @return true if a new database is created successfully and false if there
+     * is a folder with the same name
      * @throws SofofException
      */
     public boolean createDatabase() throws SofofException {
@@ -443,7 +432,7 @@ public class Server extends Thread {
                 File binds = new File(db, "binds");
                 binds.createNewFile();
                 try ( FileOutputStream out = new FileOutputStream(binds, false)) {
-                    out.write(serializer.serialize(new BindingNamesTree()));
+                    serializer.serialize(new BindingNamesTree(), out);
                 }
             } catch (IOException ex) {
                 throw new SofofException("couldn't create database ", ex);
@@ -475,9 +464,12 @@ public class Server extends Thread {
      * recover the server from forced closing
      */
     private void cleanUp() {
-        for (BindingNamesTree.BindingName bind : bindTree.getBinds()) {
-            for (BindingNamesTree.BindClass bindClass : bind.getClasses()) {
+        for (BindingNamesTree.BindingName bind : bindTree.getBindingNames()) {
+            for (BindingNamesTree.BindingClass bindClass : bind.getClasses()) {
                 if (bindClass.getStorageFile() != null) {
+                    if (bindClass.getStorageFile() != null && bindClass.getStorageFile().getName().startsWith("temp-")) {
+                        bindClass.setStorageFile(new File(bindClass.getStorageFile().getParentFile(), bindClass.getStorageFile().getName().substring(5)));
+                    }
                     File temp = new File(bindClass.getStorageFile().getParentFile(), "temp-" + bindClass.getStorageFile().getName());
                     if (temp.exists()) {
                         bindClass.getStorageFile().delete();
@@ -486,6 +478,66 @@ public class Server extends Thread {
                 }
             }
         }
+    }
+
+    /**
+     * creates a local session.
+     * @param user
+     * @return
+     * @throws SofofException 
+     */
+    public Session createLocalSession(User user) throws SofofException {
+        return new LocalSession(user);
+    }
+
+    private class LocalSession extends Session {
+
+        private User user;
+        private ListInputStream in;
+        private ListOutputStream out;
+
+        public LocalSession(User user) throws SofofException {
+            if (!users.contains(user)) {
+                throw new SofofException(user.getName() + " access denied");
+            }
+            this.user = user;
+            this.in = new DefaultListInputStream(db, bindTree, serializer);
+            this.out = new DefaultListOutputStream(db, bindTree, serializer);
+        }
+
+        @Override
+        public synchronized int execute(Executable exe) throws SofofException {
+            Lock lock = readWriteLock.writeLock();
+            try {
+                lock.lock();
+                checkExecutingPermission(user, exe);
+                int result = (exe).execute(in, out);
+                commit();
+                return result;
+            } catch (SofofException | SecurityException ex) {
+                throw ex;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
+        public synchronized List query(Query query) throws SofofException {
+            Lock lock = readWriteLock.readLock();
+            try {
+                lock.lock();
+                checkQueryingPermission(user, query);
+                return query.query(in);
+            } catch (SofofException | SecurityException ex) {
+                throw ex;
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        @Override
+        public void close() throws SofofException {}
+
     }
 
 }
