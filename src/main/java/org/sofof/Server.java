@@ -333,6 +333,9 @@ public class Server extends Thread {
                         Element userElement = (Element) usersElement.getElementsByTagName("user").item(i);
                         User u = new User(userElement.getAttribute("name"), userElement.getAttribute("password"));
                         users.add(u);
+                        if(!userElement.getAttribute("pool").isEmpty()){
+                            SessionManager.createPool(Integer.parseInt(userElement.getAttribute("pool")), this, u);
+                        }
                     }
                 }
                 if (serverElement.getElementsByTagName("clients").getLength() != 0) {
