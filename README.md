@@ -27,7 +27,7 @@ to start use sofof database you can download it from  [here](https://github.com/
 <dependency>
   <groupId>io.github.ramimanaf</groupId>
   <artifactId>sofof</artifactId>
-  <version>4.0.0</version>
+  <version>5.0.0</version>
 </dependency>
 ```
 ## Other languages

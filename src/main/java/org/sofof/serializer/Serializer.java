@@ -17,6 +17,18 @@ public interface Serializer {
     
     public String getName();
     
+    public default byte[] getStartCode(){
+        return new byte[0];
+    }
+    
+    public default byte[] getSeparatorCode(){
+        return new byte[0];
+    }
+    
+    public default byte[] getEndCode(){
+        return new byte[0];
+    }
+    
     public void serialize(Object obj, OutputStream out) throws SofofException;
     
     public Object deserialize(InputStream in) throws SofofException, ClassNotFoundException;

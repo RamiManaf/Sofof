@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.sofof.serializer.Serializer;
 
@@ -58,10 +59,30 @@ public class DefaultListInputStream implements ListInputStream {
         File file = bc.getStorageFile();
         ArrayList list = new ArrayList();
         if (file != null) {
-            try ( FileInputStream in = new FileInputStream(file)) {
+            try ( BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
                 Object object;
+                in.skip(serializer.getStartCode().length);
+                int peek = Math.min(serializer.getSeparatorCode().length, serializer.getEndCode().length);
+                boolean isThereCodes = Math.max(serializer.getSeparatorCode().length, serializer.getEndCode().length) != 0;
                 while ((object = serializer.deserialize(in)) != null) {
                     list.add(object);
+                    if (isThereCodes) {
+                        readAllBytes(new byte[peek], in);
+                        in.mark(1);
+                        if (in.read() == -1) {
+                            break;//it must be end code now
+                        } else {
+                            in.reset();
+                            int remaining = Math.max(serializer.getSeparatorCode().length, serializer.getEndCode().length) - peek;
+                            in.mark(remaining + 1);
+                            readAllBytes(new byte[remaining], in);
+                            if (in.read() == -1) {
+                                break;//now it must be end
+                            } else {
+                                in.reset();
+                            }
+                        }
+                    }
                 }
             } catch (ClassNotFoundException ex) {
                 throw new SofofException("the class read is not found in the classpath");
@@ -91,17 +112,20 @@ public class DefaultListInputStream implements ListInputStream {
             if (file.length() > Integer.MAX_VALUE) {
                 throw new RuntimeException(file.getName() + " is too big to read");
             }
-            byte[] data = new byte[(int) file.length()];
-            int position = 0;
-            while (position < data.length) {
-                int bytesRead = in.read(data, position, data.length - position);
-                if (bytesRead == -1) {
-                    throw new EOFException("had read only " + position + " of " + data.length + " and end of stream is reached");
-                }
-                position += bytesRead;
-            }
-            return data;
+            return readAllBytes(new byte[(int) file.length()], in);
         }
+    }
+
+    private byte[] readAllBytes(byte[] data, InputStream in) throws IOException {
+        int position = 0;
+        while (position < data.length) {
+            int bytesRead = in.read(data, position, data.length - position);
+            if (bytesRead == -1) {
+                throw new EOFException("had read only " + position + " of " + data.length + " and end of stream is reached");
+            }
+            position += bytesRead;
+        }
+        return data;
     }
 
     private void reloadBranches(Object object, List sharedReferances) throws SofofException {
@@ -183,16 +207,21 @@ public class DefaultListInputStream implements ListInputStream {
         private String bindingName;
         private Class clazz;
         private InputStream in;
+        private int peek;
+        private boolean isThereCodes;
 
         public DefaultSequentialReader(String bindingName, Class clazz) throws SofofException {
             this.bindingName = bindingName;
             this.clazz = clazz;
             BindingClass bc = bindTree.getBindingName(bindingName).getBindingClass(clazz);
             File file = bc.getStorageFile();
-            if(file != null){
+            if (file != null) {
                 try {
                     in = new BufferedInputStream(new FileInputStream(file));
-                } catch (FileNotFoundException ex) {
+                    in.skip(serializer.getStartCode().length);
+                    peek = Math.min(serializer.getSeparatorCode().length, serializer.getEndCode().length);
+                    isThereCodes = Math.max(serializer.getSeparatorCode().length, serializer.getEndCode().length) != 0;
+                } catch (IOException ex) {
                     throw new SofofException(ex);
                 }
             }
@@ -201,19 +230,35 @@ public class DefaultListInputStream implements ListInputStream {
         @Override
         public Object read() throws SofofException {
             try {
-                if(in == null)return null;
+                if (in == null) {
+                    return null;
+                }
                 Object obj = serializer.deserialize(in);
                 reloadBranches(obj, null);
+                if (isThereCodes) {
+                    readAllBytes(new byte[peek], in);
+                    in.mark(1);
+                    if (in.read() != -1) {
+                        in.reset();
+                        int remaining = Math.max(serializer.getSeparatorCode().length, serializer.getEndCode().length) - peek;
+                        in.mark(remaining + 1);
+                        readAllBytes(new byte[remaining], in);
+                        if (in.read() != -1) {
+                            in.reset();
+                        }//else now it must be end
+                    } //else it must be end code now
+                }
                 return obj;
-            } catch (ClassNotFoundException ex) {
+            } catch (ClassNotFoundException | IOException ex) {
                 throw new SofofException(ex);
             }
         }
 
         @Override
         public void close() throws Exception {
-            if(in!=null)
-            in.close();
+            if (in != null) {
+                in.close();
+            }
         }
 
     }

@@ -26,7 +26,7 @@ import org.sofof.serializer.Serializer;
  * @see DefaultListInputStream
  */
 public class DefaultListOutputStream implements ListOutputStream {
-
+    
     private File db;
     private BindingNamesTree bindTree;
     private Serializer serializer;
@@ -113,9 +113,14 @@ public class DefaultListOutputStream implements ListOutputStream {
         }
         try {
             try ( FileOutputStream fos = new FileOutputStream(newStorage, false)) {
-                for (Object object : objects) {
-                    serializer.serialize(object, fos);
+                fos.write(serializer.getStartCode());
+                for (int i = 0; i < objects.size(); i++) {
+                    serializer.serialize(objects.get(i), fos);
+                    if (i != objects.size() - 1) {
+                        fos.write(serializer.getSeparatorCode());
+                    }
                 }
+                fos.write(serializer.getEndCode());
             }
             if (temp != null && !transaction) {
                 temp.delete();
@@ -198,9 +203,9 @@ public class DefaultListOutputStream implements ListOutputStream {
             newStorage = new File(bindFolder, oldStorage.getName());
             oldStorage.renameTo(temp);
             try ( InputStream in = new BufferedInputStream(new FileInputStream(temp));  OutputStream out = new BufferedOutputStream(new FileOutputStream(newStorage))) {
-                int i;
-                while ((i = in.read()) != -1) {
-                    out.write(i);
+                long sizeToRead = temp.length() - serializer.getEndCode().length;
+                while (sizeToRead-- != 0) {
+                    out.write(in.read());
                 }
             } catch (IOException ex) {
                 if (!transaction) {
@@ -220,10 +225,16 @@ public class DefaultListOutputStream implements ListOutputStream {
             }
         }
         try {
-            try ( FileOutputStream fos = new FileOutputStream(newStorage, true)) {
-                for (Object object : objects) {
-                    serializer.serialize(object, fos);
+            try ( OutputStream out = new BufferedOutputStream(new FileOutputStream(newStorage, true))) {
+                if (oldStorage == null) {
+                    out.write(serializer.getStartCode());
                 }
+                for (int i=0;i<objects.size();i++) {
+                    if(!(oldStorage==null && i==0))
+                    out.write(serializer.getSeparatorCode());
+                    serializer.serialize(objects.get(i), out);
+                }
+                out.write(serializer.getEndCode());
             }
             if (temp != null && !transaction) {
                 temp.delete();
@@ -256,7 +267,7 @@ public class DefaultListOutputStream implements ListOutputStream {
         }
         return new DefaultSequentialWriter(bindingName, clazz);
     }
-
+    
     private File createHexFile(File folder) throws IOException {
         long level = 0;
         while (new File(folder, Long.toHexString(level)).exists()) {
@@ -307,13 +318,13 @@ public class DefaultListOutputStream implements ListOutputStream {
             bc.setStorageFile(null);
         });
     }
-
+    
     private void recover(File temp) {
         temp.renameTo(new File(temp.getParentFile(), temp.getName().substring(5)));
     }
-
+    
     public class DefaultSequentialWriter implements SequentialWriter {
-
+        
         private OutputStream out;
         private String bindingName;
         private Class clazz;
@@ -321,7 +332,8 @@ public class DefaultListOutputStream implements ListOutputStream {
         private List<Integer> ids;
         private File newStorage, temp;
         private BindingClass bc;
-
+        private boolean needSeparator = false;
+        
         private DefaultSequentialWriter(String bindingName, Class clazz) throws SofofException {
             File bindFolder = new File(db, bindingName);
             bindFolder.mkdir();
@@ -344,7 +356,8 @@ public class DefaultListOutputStream implements ListOutputStream {
             }
             try {
                 out = new BufferedOutputStream(new FileOutputStream(newStorage, false));
-            } catch (FileNotFoundException ex) {
+                out.write(serializer.getStartCode());
+            } catch (IOException ex) {
                 throw new SofofException(ex);
             }
             this.bindingName = bindingName;
@@ -357,7 +370,8 @@ public class DefaultListOutputStream implements ListOutputStream {
                 }
             }
         }
-
+        
+        @Override
         public ID write(Object obj) throws SofofException {
             ID sofofID = null;
             if (field != null) {
@@ -382,8 +396,12 @@ public class DefaultListOutputStream implements ListOutputStream {
                 }
             }
             try {
+                if (needSeparator) {
+                    out.write(serializer.getSeparatorCode());
+                }
                 serializer.serialize(obj, out);
-            } catch (SofofException ex) {
+                needSeparator = true;
+            } catch (SofofException | IOException ex) {
                 if (temp != null && !transaction) {
                     newStorage.delete();
                     recover(temp);
@@ -393,19 +411,23 @@ public class DefaultListOutputStream implements ListOutputStream {
             }
             return sofofID;
         }
-
+        
         @Override
         public void close() throws IOException {
+            if (needSeparator) {
+                out.write(serializer.getSeparatorCode());
+            }
+            out.write(serializer.getEndCode());
             out.close();
             if (temp != null && !transaction) {
                 temp.delete();
             }
             bc.setStorageFile(newStorage);
-            if(temp ==null && transaction){
+            if (temp == null && transaction) {
                 newData.add(bc);
             }
         }
-
+        
     }
-
+    
 }

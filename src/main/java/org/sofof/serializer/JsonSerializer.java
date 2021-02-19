@@ -43,6 +43,7 @@ public class JsonSerializer implements Serializer {
     private static final List<Class<?>> BOXING_TYPES = getBoxingTypes();
     private static final List<ClassSpecificSerializer> customSerializers = new ArrayList<>();
     private final byte BRACKET = 0b01111011;//{
+    private final byte COMMA = 0b00101100;//,
     private final byte CLOSED_BRACKET = 0b01111101;//}
     private final byte SQUARE_BRACKET = 0b01011011;//[
     private final byte CLOSED_SQUARE_BRACKET = 0b01011101;//]
@@ -54,13 +55,48 @@ public class JsonSerializer implements Serializer {
         customSerializers.add(new ClassSerializer());
     }
 
+    private static boolean pretty = false;
+
     public static List<ClassSpecificSerializer> getCustomSerializers() {
         return customSerializers;
+    }
+
+    /**
+     * @return
+     */
+    public static boolean isPretty() {
+        return pretty;
+    }
+
+    /**
+     * sets the json printing in the database to be pretty. this is suggested
+     * only for debuging. This option will increase characters that should be
+     * printed in the database files.
+     *
+     * @param pretty
+     */
+    public static void setPretty(boolean pretty) {
+        JsonSerializer.pretty = pretty;
     }
 
     @Override
     public String getName() {
         return "json";
+    }
+
+    @Override
+    public byte[] getStartCode() {
+        return new byte[]{BRACKET};
+    }
+
+    @Override
+    public byte[] getSeparatorCode() {
+        return new byte[]{COMMA};
+    }
+
+    @Override
+    public byte[] getEndCode() {
+        return new byte[]{CLOSED_BRACKET};
     }
 
     @Override
@@ -70,7 +106,14 @@ public class JsonSerializer implements Serializer {
         if (obj.getClass().equals(String.class)) {
             json = "\"" + obj + "\"";
         } else {
-            json = serializeData(obj).toString();
+            Object result = serializeData(obj);
+            if (result instanceof JSONObject) {
+                json = ((JSONObject) result).toString(2);
+            } else if (result instanceof JSONArray) {
+                json = ((JSONArray) result).toString(2);
+            } else {
+                json = result.toString();
+            }
         }
         if (!json.startsWith("{") && !json.startsWith("[")) {
             json = "{\"value\":" + json + "}";
@@ -145,7 +188,7 @@ public class JsonSerializer implements Serializer {
         return jsonObj;
     }
 
-    public static List<Field> getAllWritableFields(Class<?> type) {
+    private static List<Field> getAllWritableFields(Class<?> type) {
         return Arrays.asList(type.getDeclaredFields()).stream().filter((f) -> !Modifier.isTransient(f.getModifiers())
                 && !Modifier.isStatic(f.getModifiers())
                 && !Modifier.isFinal(f.getModifiers())).collect(Collectors.toList());
@@ -277,7 +320,7 @@ public class JsonSerializer implements Serializer {
                 List<Field> fields = getAllWritableFields(c);
                 for (Field field : fields) {
                     field.setAccessible(true);
-                    if(!field.getType().isPrimitive()){
+                    if (!field.getType().isPrimitive()) {
                         field.set(obj, null);
                     }
                     for (String key : jsonObj.keySet()) {
