@@ -58,6 +58,12 @@ public class SofofSerializer implements Serializer {
     private static final byte REFERECE = 13;
     private static List<ClassSpecificSerializer> customSerializers = new ArrayList<>();
 
+    /**
+     * return a list of custom serializers. you can add your custom serializer
+     * to this list
+     *
+     * @return
+     */
     public static List<ClassSpecificSerializer> getCustomSerializers() {
         return customSerializers;
     }

@@ -57,12 +57,18 @@ public class JsonSerializer implements Serializer {
 
     private static boolean pretty = false;
 
+    /**
+     * return a list of custom serializers. you can add your custom serializer
+     * to this list
+     *
+     * @return
+     */
     public static List<ClassSpecificSerializer> getCustomSerializers() {
         return customSerializers;
     }
 
     /**
-     * @return
+     * @return true if the serializer is set to print pretty json
      */
     public static boolean isPretty() {
         return pretty;
@@ -188,7 +194,7 @@ public class JsonSerializer implements Serializer {
         return jsonObj;
     }
 
-    private static List<Field> getAllWritableFields(Class<?> type) {
+    public static List<Field> getAllWritableFields(Class<?> type) {
         return Arrays.asList(type.getDeclaredFields()).stream().filter((f) -> !Modifier.isTransient(f.getModifiers())
                 && !Modifier.isStatic(f.getModifiers())
                 && !Modifier.isFinal(f.getModifiers())).collect(Collectors.toList());
