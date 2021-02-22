@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,6 +72,7 @@ public class SofofSerializer implements Serializer {
     static {
         customSerializers.add(new ClassSerializer());
         customSerializers.add(new CollectionSerializer());
+        customSerializers.add(new FileSerializer());
     }
 
     @Override
@@ -424,6 +426,35 @@ public class SofofSerializer implements Serializer {
             }
         }
 
+    }
+    
+    private static class FileSerializer implements ClassSpecificSerializer<File>{
+
+        @Override
+        public Class<File> getClazz() {
+            return File.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, File obj, OutputStream out) throws SofofException {
+            DataOutputStream dos = new DataOutputStream(out);
+            try {
+                dos.writeUTF(obj.getPath());
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public File deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            DataInputStream dis = new DataInputStream(in);
+            try {
+                return new File(dis.readUTF());
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+        
     }
 
 }

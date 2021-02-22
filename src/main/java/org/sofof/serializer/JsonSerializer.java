@@ -7,6 +7,7 @@ package org.sofof.serializer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +54,7 @@ public class JsonSerializer implements Serializer {
 
     static {
         customSerializers.add(new ClassSerializer());
+        customSerializers.add(new FileSerializer());
     }
 
     private static boolean pretty = false;
@@ -516,6 +518,43 @@ public class JsonSerializer implements Serializer {
             } catch (ClassNotFoundException | IOException ex) {
                 throw new SofofException(ex);
             }
+        }
+
+    }
+
+    private static class FileSerializer implements ClassSpecificSerializer<File> {
+
+        @Override
+        public Class<File> getClazz() {
+            return File.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, File obj, OutputStream out) throws SofofException {
+            try {
+                out.write(new JSONObject().put("path", obj.getPath()).put("separator", File.pathSeparator).toString().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public File deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            int i;
+            try {
+                while ((i = in.read()) != -1) {
+                    bytes.write(i);
+                }
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+            JSONObject obj = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+            String path = obj.getString("path");
+            if(!obj.getString("separator").equals(File.pathSeparator)){
+                path = path.replace(obj.getString("separator").charAt(0), File.pathSeparatorChar);
+            }
+            return new File(path);
         }
 
     }
