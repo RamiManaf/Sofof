@@ -118,7 +118,7 @@ public class Select implements Query, Serializable {
         List objs;
         if (shuffle || condition == null) {
             objs = in.readAll(bind, clazz);
-            Collections.shuffle(objs);
+            if(shuffle)Collections.shuffle(objs);
             if (condition != null) {
                 for (Object obj : new ArrayList(objs)) {
                     if (!condition.check(obj)) {
