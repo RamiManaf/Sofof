@@ -324,26 +324,24 @@ public class Server extends Thread {
             Element serverElement = (Element) root.getElementsByTagName("server").item(0);
             this.db = new File(serverElement.getAttribute("database"));
             createDatabase();
-            port = serverElement.getAttribute("port") == null ? -1 : Integer.parseInt(serverElement.getAttribute("port"));
-            if (port != -1) {
-                this.ssl = serverElement.getAttribute("ssl").isEmpty() ? false : Boolean.valueOf(serverElement.getAttribute("ssl"));
-                if (serverElement.getElementsByTagName("users").getLength() != 0) {
-                    Element usersElement = (Element) serverElement.getElementsByTagName("users").item(0);
-                    for (int i = 0; i < usersElement.getElementsByTagName("user").getLength(); i++) {
-                        Element userElement = (Element) usersElement.getElementsByTagName("user").item(i);
-                        User u = new User(userElement.getAttribute("name"), userElement.getAttribute("password"));
-                        users.add(u);
-                        if(!userElement.getAttribute("pool").isEmpty()){
-                            SessionManager.createPool(Integer.parseInt(userElement.getAttribute("pool")), this, u);
-                        }
+            port = serverElement.getAttribute("port").isEmpty() ? -1 : Integer.parseInt(serverElement.getAttribute("port"));
+            this.ssl = serverElement.getAttribute("ssl").isEmpty() ? false : Boolean.valueOf(serverElement.getAttribute("ssl"));
+            if (serverElement.getElementsByTagName("users").getLength() != 0) {
+                Element usersElement = (Element) serverElement.getElementsByTagName("users").item(0);
+                for (int i = 0; i < usersElement.getElementsByTagName("user").getLength(); i++) {
+                    Element userElement = (Element) usersElement.getElementsByTagName("user").item(i);
+                    User u = new User(userElement.getAttribute("name"), userElement.getAttribute("password"));
+                    users.add(u);
+                    if (!userElement.getAttribute("pool").isEmpty()) {
+                        SessionManager.createPool(Integer.parseInt(userElement.getAttribute("pool")), this, u);
                     }
                 }
-                if (serverElement.getElementsByTagName("clients").getLength() != 0) {
-                    Element clientsElement = (Element) serverElement.getElementsByTagName("clients").item(0);
-                    clients = new ArrayList<>();
-                    for (int i = 0; i < clientsElement.getElementsByTagName("client").getLength(); i++) {
-                        clients.add(clientsElement.getElementsByTagName("client").item(i).getTextContent());
-                    }
+            }
+            if (serverElement.getElementsByTagName("clients").getLength() != 0) {
+                Element clientsElement = (Element) serverElement.getElementsByTagName("clients").item(0);
+                clients = new ArrayList<>();
+                for (int i = 0; i < clientsElement.getElementsByTagName("client").getLength(); i++) {
+                    clients.add(clientsElement.getElementsByTagName("client").item(i).getTextContent());
                 }
             }
         } catch (IOException ex) {
@@ -366,7 +364,7 @@ public class Server extends Thread {
     }
 
     private byte[] readFile(File file) throws FileNotFoundException, IOException {
-        try ( FileInputStream in = new FileInputStream(file)) {
+        try (FileInputStream in = new FileInputStream(file)) {
             if (file.length() > Integer.MAX_VALUE) {
                 throw new RuntimeException(file.getName() + " is too big to read");
             }
@@ -389,7 +387,7 @@ public class Server extends Thread {
      * @throws SofofException
      */
     private void commit() throws SofofException {
-        try ( FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
+        try (FileOutputStream out = new FileOutputStream(new File(db, "binds"), false)) {
             serializer.serialize(bindTree, out);
             out.flush();
         } catch (IOException ex) {
@@ -434,7 +432,7 @@ public class Server extends Thread {
                 db.mkdir();
                 File binds = new File(db, "binds");
                 binds.createNewFile();
-                try ( FileOutputStream out = new FileOutputStream(binds, false)) {
+                try (FileOutputStream out = new FileOutputStream(binds, false)) {
                     serializer.serialize(new BindingNamesTree(), out);
                 }
             } catch (IOException ex) {
@@ -485,9 +483,10 @@ public class Server extends Thread {
 
     /**
      * creates a local session.
+     *
      * @param user
      * @return
-     * @throws SofofException 
+     * @throws SofofException
      */
     public Session createLocalSession(User user) throws SofofException {
         return new LocalSession(user);
@@ -504,12 +503,11 @@ public class Server extends Thread {
                 throw new SofofException(user.getName() + " access denied");
             }
             this.user = user;
-            this.in = new DefaultListInputStream(db, bindTree, serializer);
-            this.out = new DefaultListOutputStream(db, bindTree, serializer);
         }
 
         @Override
         public synchronized int execute(Executable exe) throws SofofException {
+            lazyInitialization();
             Lock lock = readWriteLock.writeLock();
             try {
                 lock.lock();
@@ -526,6 +524,7 @@ public class Server extends Thread {
 
         @Override
         public synchronized List query(Query query) throws SofofException {
+            lazyInitialization();
             Lock lock = readWriteLock.readLock();
             try {
                 lock.lock();
@@ -538,8 +537,16 @@ public class Server extends Thread {
             }
         }
 
+        private void lazyInitialization() {
+            if (in == null) {
+                this.in = new DefaultListInputStream(db, bindTree, serializer);
+                this.out = new DefaultListOutputStream(db, bindTree, serializer);
+            }
+        }
+
         @Override
-        public void close() throws SofofException {}
+        public void close() throws SofofException {
+        }
 
     }
 
