@@ -329,7 +329,7 @@ public class DefaultListOutputStream implements ListOutputStream {
         private String bindingName;
         private Class clazz;
         private Field field;
-        private List<Integer> ids;
+        private List<Integer> ids = new ArrayList<>();
         private File newStorage, temp;
         private BindingClass bc;
         private boolean needSeparator = false;
