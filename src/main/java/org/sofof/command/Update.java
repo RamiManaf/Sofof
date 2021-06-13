@@ -104,10 +104,10 @@ public class Update implements Executable, Serializable {
             }
         } else {
             Object obj;
-            try (SequentialWriter writer = out.createSequentialWriter(bind, object.getClass()); SequentialReader reader = in.createSequentialReader(bind, object.getClass())) {
-                while((obj = reader.read())!=null){
+            try ( SequentialWriter writer = out.createSequentialWriter(bind, object.getClass());  SequentialReader reader = in.createSequentialReader(bind, object.getClass())) {
+                while ((obj = reader.read()) != null) {
                     if (obj.equals(object)) {
-                        writer.write(object);
+                        writer.write(update == null ? object : update);
                         affected++;
                     } else {
                         writer.write(obj);
