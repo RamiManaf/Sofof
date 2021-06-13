@@ -24,5 +24,7 @@ public interface SequentialReader extends AutoCloseable {
      * @throws SofofException
      */
     public Object read() throws SofofException;
+    
+    public void skip() throws SofofException, ClassNotFoundException;
 
 }

@@ -10,7 +10,6 @@ import java.io.BufferedOutputStream;
 import org.sofof.BindingNamesTree.BindingClass;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,9 +52,6 @@ public class DefaultListOutputStream implements ListOutputStream {
      */
     @Override
     public List write(List objects, String bind, Class clazz) throws SofofException {
-        if (bind == null || bind.trim().isEmpty()) {
-            bind = "SofofNoName";
-        }
         try {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.getType().equals(ID.class)) {

@@ -11,10 +11,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.sofof.BindingNamesTree;
 import org.sofof.ListOutputStream;
 import org.sofof.ListInputStream;
-import org.sofof.SequentialReader;
-import org.sofof.SequentialWriter;
 
 /**
  * binds objects to binding name and saves them in the database. binding name
@@ -105,7 +104,21 @@ public class Bind implements Executable, Query, Serializable {
         if (objects.isEmpty()) {
             return 0;
         }
-        out.add(objects, bind, c == null?objects.get(0).getClass():c);
+        if (c == null) {
+            c = objects.get(0).getClass();
+        }
+        bind = BindingNamesTree.parseNoName(bind);
+        out.add(objects, bind, c);
+        String indexExpression = in.getBindingNamesTree().getBindingName(bind).getBindingClass(c).getIndexExpression();
+        if (indexExpression != null) {
+            Index.Indexes indexes = Index.getIndexes(bind, c, in);
+            for (int i = 0; i < objects.size(); i++) {
+                Object result = ExpressionExecuter.execute(indexExpression, objects.get(i));
+                Index.checkIndexCompatablity(result, indexes);
+                indexes.put((Comparable) result, indexes.size());
+            }
+            new Update(indexes).from(Index.SOFOF_INDEX).execute(in, out);
+        }
         return objects.size();
     }
 
@@ -114,7 +127,8 @@ public class Bind implements Executable, Query, Serializable {
         if (objects.isEmpty()) {
             return new ArrayList();
         }
-        List recovered = in.readAll(bind, c == null?objects.get(0).getClass():c);
+        bind = BindingNamesTree.parseNoName(bind);
+        List recovered = in.readAll(bind, c == null ? objects.get(0).getClass() : c);
         ArrayList matches = new ArrayList();
         objects.forEach((object) -> {
             if (recovered.contains(object)) {

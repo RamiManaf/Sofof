@@ -225,6 +225,9 @@ public class SofofSerializer implements Serializer {
     @Override
     public void skip(InputStream in) throws SofofException {
         try {
+            if (in.read() == -1) {
+                return;
+            }
             in.skip(ByteBuffer.wrap(readWholeByteArray(in, 4)).getInt());
         } catch (IOException ex) {
             throw new SofofException(ex);

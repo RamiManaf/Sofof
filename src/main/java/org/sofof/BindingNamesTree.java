@@ -35,8 +35,9 @@ public class BindingNamesTree implements Serializable {
         private String name;
         private ArrayList<BindingClass> classes;
 
-        private BindingName(){}
-        
+        private BindingName() {
+        }
+
         /**
          *
          * @param name binding name
@@ -63,7 +64,9 @@ public class BindingNamesTree implements Serializable {
         }
 
         /**
-         * return BindClass object for the passed class. If there is no BindClass with this class the method will create new one
+         * return BindClass object for the passed class. If there is no
+         * BindClass with this class the method will create new one
+         *
          * @param c class which you want to get his BindingClass object
          * @return BindingClass
          */
@@ -85,7 +88,7 @@ public class BindingNamesTree implements Serializable {
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             name = in.readUTF();
-            classes = new ArrayList(Arrays.asList((BindingClass[])in.readObject()));
+            classes = new ArrayList(Arrays.asList((BindingClass[]) in.readObject()));
         }
 
     }
@@ -96,9 +99,11 @@ public class BindingNamesTree implements Serializable {
 
         private Class clazz;
         private File storageFile;
+        private String indexExpression;
 
-        private BindingClass(){}
-        
+        private BindingClass() {
+        }
+
         /**
          *
          * @param c class bound to the binding name
@@ -108,7 +113,7 @@ public class BindingNamesTree implements Serializable {
         }
 
         /**
-         * 
+         *
          * @return class object associated to this BindingClass
          */
         public Class getClazz() {
@@ -125,20 +130,43 @@ public class BindingNamesTree implements Serializable {
 
         /**
          * set the storage file that objects of this class are saved in it
-         * @param storageFile 
+         *
+         * @param storageFile
          */
         public void setStorageFile(File storageFile) {
             this.storageFile = storageFile;
         }
 
+        /**
+         * return the expression that is used to get the field that the binding
+         * class is indexed based on it
+         *
+         * @return
+         */
+        public String getIndexExpression() {
+            return indexExpression;
+        }
+
+        /**
+         * set the expression that is used to get the field that the binding
+         * class is indexed based on it
+         *
+         * @param indexExpression
+         */
+        public void setIndexExpression(String indexExpression) {
+            this.indexExpression = indexExpression;
+        }
+
         private void writeObject(ObjectOutputStream out) throws IOException {
             out.writeObject(clazz);
             out.writeObject(storageFile);
+            out.writeUTF(indexExpression);
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             clazz = (Class) in.readObject();
             storageFile = (File) in.readObject();
+            indexExpression = in.readUTF();
         }
 
     }
@@ -149,6 +177,7 @@ public class BindingNamesTree implements Serializable {
 
     /**
      * add binding name to the tree
+     *
      * @param bind binding name to be added
      */
     public synchronized void addBind(BindingName bind) {
@@ -160,12 +189,14 @@ public class BindingNamesTree implements Serializable {
     }
 
     /**
-     * return BindingName with the passed name and if there is no one it will create one
+     * return BindingName with the passed name and if there is no one it will
+     * create one
      *
      * @param bindName
      * @return
      */
     public BindingName getBindingName(String bindName) {
+        bindName = parseNoName(bindName);
         for (BindingName bind : bindingNames) {
             if (bind.getName().equals(bindName)) {
                 return bind;
@@ -181,7 +212,11 @@ public class BindingNamesTree implements Serializable {
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        bindingNames = new ArrayList<>(Arrays.asList((BindingName[])in.readObject()));
+        bindingNames = new ArrayList<>(Arrays.asList((BindingName[]) in.readObject()));
+    }
+
+    public static String parseNoName(String bindName) {
+        return (bindName == null || bindName.trim().isEmpty()) ? "SofofNoName" : bindName;
     }
 
 }

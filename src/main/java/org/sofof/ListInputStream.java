@@ -35,5 +35,7 @@ public interface ListInputStream {
      * @throws SofofException 
      */
     public SequentialReader createSequentialReader(String bindingName, Class clazz) throws SofofException;
+    
+    public BindingNamesTree getBindingNamesTree();
 
 }

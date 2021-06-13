@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import org.sofof.BindingNamesTree;
 import org.sofof.ListOutputStream;
 import org.sofof.ListInputStream;
 import org.sofof.SequentialReader;
@@ -91,15 +92,28 @@ public class Unbind implements Executable, Serializable {
     @Override
     public int execute(ListInputStream in, ListOutputStream out) throws SofofException {
         int affected = 0;
+        Index.Indexes indexes = null;
+        bind = BindingNamesTree.parseNoName(bind);
         if (classes != null) {
             for (Class clazz : classes) {
                 try ( SequentialWriter writer = out.createSequentialWriter(bind, clazz);  SequentialReader reader = in.createSequentialReader(bind, clazz)) {
                     Object obj;
+                    String indexExpression = in.getBindingNamesTree().getBindingName(bind).getBindingClass(clazz).getIndexExpression();
+                    if (indexExpression != null) {
+                        indexes = Index.getIndexes(bind, clazz, in);
+                    }
                     while ((obj = reader.read()) != null) {
-                        if (condition != null && condition.check(obj)) {
+                        if (condition != null && !condition.check(obj)) {
                             writer.write(obj);
+                        } else {
+                            if (indexes != null) {
+                                indexes.remove((Comparable) ExpressionExecuter.execute(indexExpression, obj));
+                            }
                             affected++;
                         }
+                    }
+                    if (indexes != null) {
+                        new Update(indexes).from(Index.SOFOF_INDEX).execute(in, out);
                     }
                 } catch (Exception ex) {
                     throw new SofofException(ex);
@@ -109,13 +123,25 @@ public class Unbind implements Executable, Serializable {
             if (objects.isEmpty()) {
                 return 0;
             }
-            try ( SequentialWriter writer = out.createSequentialWriter(bind, objects.get(0).getClass());  SequentialReader reader = in.createSequentialReader(bind, objects.get(0).getClass())) {
+            Class clazz = objects.get(0).getClass();
+            try ( SequentialWriter writer = out.createSequentialWriter(bind, clazz);  SequentialReader reader = in.createSequentialReader(bind, clazz)) {
                 Object obj;
+                String indexExpression = in.getBindingNamesTree().getBindingName(bind).getBindingClass(clazz).getIndexExpression();
+                if (indexExpression != null) {
+                    indexes = Index.getIndexes(bind, clazz, in);
+                }
                 while ((obj = reader.read()) != null) {
                     if (!objects.contains(obj)) {
                         writer.write(obj);
+                    } else {
+                        if (indexes != null) {
+                            indexes.remove((Comparable) ExpressionExecuter.execute(indexExpression, obj));
+                        }
                         affected++;
                     }
+                }
+                if (indexes != null) {
+                    new Update(indexes).from(Index.SOFOF_INDEX).execute(in, out);
                 }
             } catch (Exception ex) {
                 throw new SofofException(ex);

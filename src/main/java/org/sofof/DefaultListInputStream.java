@@ -16,8 +16,8 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import org.sofof.annotation.NonRelational;
 import org.sofof.serializer.Serializer;
 
 /**
@@ -52,9 +52,6 @@ public class DefaultListInputStream implements ListInputStream {
     }
 
     private List readAll(String bindingName, Class c, List sharedReferances) throws SofofException {
-        if (bindingName == null || bindingName.isEmpty()) {
-            bindingName = "SofofNoName";
-        }
         BindingClass bc = bindTree.getBindingName(bindingName).getBindingClass(c);
         File file = bc.getStorageFile();
         ArrayList list = new ArrayList();
@@ -90,8 +87,10 @@ public class DefaultListInputStream implements ListInputStream {
                 throw new SofofException("unable to read data from server files", ex);
             }
         }
-        for (Object object : list) {
-            reloadBranches(object, sharedReferances);
+        if (!c.isAnnotationPresent(NonRelational.class)) {
+            for (Object object : list) {
+                reloadBranches(object, sharedReferances);
+            }
         }
         return list;
     }
@@ -175,6 +174,11 @@ public class DefaultListInputStream implements ListInputStream {
         }
     }
 
+    @Override
+    public BindingNamesTree getBindingNamesTree() {
+        return bindTree;
+    }
+
     private static ID getBaseID(Object object) throws SofofException {
         if (object == null || object.getClass().isPrimitive() || object.getClass().isArray() || (object.getClass().getPackage() != null && object.getClass().getPackage().getName().startsWith("java.lang"))) {
             return null;
@@ -234,7 +238,12 @@ public class DefaultListInputStream implements ListInputStream {
                     return null;
                 }
                 Object obj = serializer.deserialize(in);
-                reloadBranches(obj, null);
+                if (obj == null) {
+                    return null;
+                }
+                if (!clazz.isAnnotationPresent(NonRelational.class)) {
+                    reloadBranches(obj, null);
+                }
                 if (isThereCodes) {
                     readAllBytes(new byte[peek], in);
                     in.mark(1);
@@ -251,6 +260,30 @@ public class DefaultListInputStream implements ListInputStream {
                 return obj;
             } catch (ClassNotFoundException | IOException ex) {
                 throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public void skip() throws SofofException {
+            if (in != null) {
+                try {
+                    serializer.skip(in);
+                    if (isThereCodes) {
+                        readAllBytes(new byte[peek], in);
+                        in.mark(1);
+                        if (in.read() != -1) {
+                            in.reset();
+                            int remaining = Math.max(serializer.getSeparatorCode().length, serializer.getEndCode().length) - peek;
+                            in.mark(remaining + 1);
+                            readAllBytes(new byte[remaining], in);
+                            if (in.read() != -1) {
+                                in.reset();
+                            }//else now it must be end
+                        } //else it must be end code now
+                    }
+                } catch (IOException | ClassNotFoundException ex) {
+                    throw new SofofException(ex);
+                }
             }
         }
 
