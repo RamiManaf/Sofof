@@ -274,6 +274,8 @@ public class JsonSerializer implements Serializer {
                 return array;
             } else if (obj instanceof JSONObject) {
                 return readObject((JSONObject) obj);
+            } else if (obj.equals(JSONObject.NULL)) {
+                return null;
             } else {
                 return obj;
             }
