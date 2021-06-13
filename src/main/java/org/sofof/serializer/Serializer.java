@@ -33,5 +33,7 @@ public interface Serializer {
     
     public Object deserialize(InputStream in) throws SofofException, ClassNotFoundException;
     
+    public void skip(InputStream in) throws SofofException, ClassNotFoundException;
+    
     
 }

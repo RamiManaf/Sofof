@@ -43,4 +43,9 @@ public class JavaSerializer implements Serializer {
         }
     }
 
+    @Override
+    public void skip(InputStream in) throws SofofException, ClassNotFoundException {
+        deserialize(in);
+    }
+
 }

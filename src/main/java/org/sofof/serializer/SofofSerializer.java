@@ -222,6 +222,15 @@ public class SofofSerializer implements Serializer {
         }
     }
 
+    @Override
+    public void skip(InputStream in) throws SofofException {
+        try {
+            in.skip(ByteBuffer.wrap(readWholeByteArray(in, 4)).getInt());
+        } catch (IOException ex) {
+            throw new SofofException(ex);
+        }
+    }
+
     private byte[] readWholeByteArray(InputStream in, int size) throws SofofException, IOException {
         byte[] byteArray = new byte[size];
         int position = 0;
@@ -427,8 +436,8 @@ public class SofofSerializer implements Serializer {
         }
 
     }
-    
-    private static class FileSerializer implements ClassSpecificSerializer<File>{
+
+    private static class FileSerializer implements ClassSpecificSerializer<File> {
 
         @Override
         public Class<File> getClazz() {
@@ -454,7 +463,7 @@ public class SofofSerializer implements Serializer {
                 throw new SofofException(ex);
             }
         }
-        
+
     }
 
 }

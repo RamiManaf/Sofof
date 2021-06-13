@@ -456,6 +456,37 @@ public class JsonSerializer implements Serializer {
         }
     }
 
+    @Override
+    public void skip(InputStream in) throws SofofException, ClassNotFoundException {
+        try {
+            int firstChar = in.read();
+            if (firstChar == -1) {
+                return;
+            }
+            if (firstChar != BRACKET && firstChar != SQUARE_BRACKET) {
+                throw new SofofException("trying to deserialize a non-json input stream");
+            }
+            int openBrackets = 1;
+            byte lastByte = 0;
+            boolean stringContext = false;
+            while (openBrackets > 0) {
+                int newByte = in.read();
+                if ((newByte == BRACKET || newByte == SQUARE_BRACKET) && !stringContext) {
+                    openBrackets++;
+                }
+                if ((newByte == CLOSED_BRACKET || newByte == CLOSED_SQUARE_BRACKET) && !stringContext) {
+                    openBrackets--;
+                }
+                if ((newByte == DOUBLE_QUOTATION || newByte == QUOTATION) && lastByte != BACK_SLASH) {
+                    stringContext = !stringContext;
+                }
+                lastByte = (byte) newByte;
+            }
+        } catch (IOException ex) {
+            throw new SofofException(ex);
+        }
+    }
+
     private static class CountingInputStreamFilter extends FilterInputStream {
 
         int bytesRead = 0;
@@ -551,7 +582,7 @@ public class JsonSerializer implements Serializer {
             }
             JSONObject obj = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
             String path = obj.getString("path");
-            if(!obj.getString("separator").equals(File.pathSeparator)){
+            if (!obj.getString("separator").equals(File.pathSeparator)) {
                 path = path.replace(obj.getString("separator").charAt(0), File.pathSeparatorChar);
             }
             return new File(path);
