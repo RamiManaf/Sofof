@@ -20,6 +20,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -73,6 +77,9 @@ public class SofofSerializer implements Serializer {
         customSerializers.add(new ClassSerializer());
         customSerializers.add(new CollectionSerializer());
         customSerializers.add(new FileSerializer());
+        customSerializers.add(new LocalDateSerializer());
+        customSerializers.add(new LocalTimeSerializer());
+        customSerializers.add(new LocalDateTimeSerializer());
     }
 
     @Override
@@ -137,9 +144,9 @@ public class SofofSerializer implements Serializer {
             ((ClassSpecificSerializer) obj).serialize(this, obj, out);
             return;
         }
-        for (ClassSpecificSerializer serializer : customSerializers) {
-            if (serializer.getClazz().isAssignableFrom(obj.getClass())) {
-                serializer.serialize(this, obj, out);
+        for (int i = customSerializers.size() - 1; i >= 0; i--) {
+            if (customSerializers.get(i).getClazz().isAssignableFrom(obj.getClass())) {
+                customSerializers.get(i).serialize(this, obj, out);
                 return;
             }
         }
@@ -333,9 +340,9 @@ public class SofofSerializer implements Serializer {
                 references.put(referenceKey, result);
                 return result;
             }
-            for (ClassSpecificSerializer serializer : customSerializers) {
-                if (serializer.getClazz().isAssignableFrom(c)) {
-                    Object result = serializer.deserialize(this, c, in);
+            for (int i = customSerializers.size() - 1; i >= 0; i--) {
+                if (customSerializers.get(i).getClazz().isAssignableFrom(c)) {
+                    Object result = customSerializers.get(i).deserialize(this, c, in);
                     references.put(referenceKey, result);
                     return result;
                 }
@@ -462,6 +469,93 @@ public class SofofSerializer implements Serializer {
             DataInputStream dis = new DataInputStream(in);
             try {
                 return new File(dis.readUTF());
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+    }
+
+    private static class LocalDateSerializer implements ClassSpecificSerializer<LocalDate> {
+
+        @Override
+        public Class<LocalDate> getClazz() {
+            return LocalDate.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, LocalDate obj, OutputStream out) throws SofofException {
+            DataOutputStream dos = new DataOutputStream(out);
+            try {
+                dos.writeUTF(obj.format(DateTimeFormatter.ISO_DATE));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public LocalDate deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            DataInputStream dis = new DataInputStream(in);
+            try {
+                return LocalDate.parse(dis.readUTF(), DateTimeFormatter.ISO_DATE);
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+    }
+
+    private static class LocalTimeSerializer implements ClassSpecificSerializer<LocalTime> {
+
+        @Override
+        public Class<LocalTime> getClazz() {
+            return LocalTime.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, LocalTime obj, OutputStream out) throws SofofException {
+            DataOutputStream dos = new DataOutputStream(out);
+            try {
+                dos.writeUTF(obj.format(DateTimeFormatter.ISO_TIME));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public LocalTime deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            DataInputStream dis = new DataInputStream(in);
+            try {
+                return LocalTime.parse(dis.readUTF(), DateTimeFormatter.ISO_TIME);
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+    }
+
+    private static class LocalDateTimeSerializer implements ClassSpecificSerializer<LocalDateTime> {
+
+        @Override
+        public Class<LocalDateTime> getClazz() {
+            return LocalDateTime.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, LocalDateTime obj, OutputStream out) throws SofofException {
+            DataOutputStream dos = new DataOutputStream(out);
+            try {
+                dos.writeUTF(obj.format(DateTimeFormatter.ISO_DATE_TIME));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public LocalDateTime deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            DataInputStream dis = new DataInputStream(in);
+            try {
+                return LocalDateTime.parse(dis.readUTF(), DateTimeFormatter.ISO_DATE_TIME);
             } catch (IOException ex) {
                 throw new SofofException(ex);
             }

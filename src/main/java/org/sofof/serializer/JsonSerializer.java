@@ -18,6 +18,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -55,6 +59,9 @@ public class JsonSerializer implements Serializer {
     static {
         customSerializers.add(new ClassSerializer());
         customSerializers.add(new FileSerializer());
+        customSerializers.add(new LocalDateSerializer());
+        customSerializers.add(new LocalTimeSerializer());
+        customSerializers.add(new LocalDateTimeSerializer());
     }
 
     private static boolean pretty = false;
@@ -177,10 +184,10 @@ public class JsonSerializer implements Serializer {
             return new JSONObject(new String(baos.toByteArray(), StandardCharsets.UTF_8));
         }
         Class c = obj.getClass();
-        for (ClassSpecificSerializer serializer : customSerializers) {
-            if (serializer.getClazz().equals(c)) {
+        for (int i = customSerializers.size() - 1; i >= 0; i--) {
+            if (customSerializers.get(i).getClazz().equals(c)) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                serializer.serialize(this, obj, baos);
+                customSerializers.get(i).serialize(this, obj, baos);
                 return new JSONObject(new String(baos.toByteArray(), StandardCharsets.UTF_8));
             }
         }
@@ -318,9 +325,9 @@ public class JsonSerializer implements Serializer {
                 ClassSpecificSerializer obj = (ClassSpecificSerializer) constructor.newInstance();
                 return obj.deserialize(this, c, new ByteArrayInputStream(jsonObj.toString().getBytes(StandardCharsets.UTF_8)));
             }
-            for (ClassSpecificSerializer serializer : customSerializers) {
-                if (serializer.getClazz().equals(c)) {
-                    return serializer.deserialize(this, c, new ByteArrayInputStream(jsonObj.toString().getBytes(StandardCharsets.UTF_8)));
+            for (int i = customSerializers.size() - 1; i >= 0; i--) {
+                if (customSerializers.get(i).getClazz().equals(c)) {
+                    return customSerializers.get(i).deserialize(this, c, new ByteArrayInputStream(jsonObj.toString().getBytes(StandardCharsets.UTF_8)));
                 }
             }
             Constructor constructor = c.getDeclaredConstructor();
@@ -565,7 +572,7 @@ public class JsonSerializer implements Serializer {
         @Override
         public void serialize(Serializer serializer, File obj, OutputStream out) throws SofofException {
             try {
-                out.write(new JSONObject().put("path", obj.getPath()).put("separator", File.pathSeparator).toString().getBytes(StandardCharsets.UTF_8));
+                out.write(new JSONObject().put("class", File.class.getName()).put("path", obj.getPath()).put("separator", File.pathSeparator).toString().getBytes(StandardCharsets.UTF_8));
             } catch (IOException ex) {
                 throw new SofofException(ex);
             }
@@ -588,6 +595,105 @@ public class JsonSerializer implements Serializer {
                 path = path.replace(obj.getString("separator").charAt(0), File.pathSeparatorChar);
             }
             return new File(path);
+        }
+
+    }
+
+    private static class LocalDateSerializer implements ClassSpecificSerializer<LocalDate> {
+
+        @Override
+        public Class<LocalDate> getClazz() {
+            return LocalDate.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, LocalDate obj, OutputStream out) throws SofofException {
+            try {
+                out.write(new JSONObject().put("class", LocalDate.class.getName()).put("date", obj.format(DateTimeFormatter.ISO_DATE)).toString().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public LocalDate deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            int i;
+            try {
+                while ((i = in.read()) != -1) {
+                    bytes.write(i);
+                }
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+            JSONObject obj = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+            return LocalDate.parse(obj.getString("date"), DateTimeFormatter.ISO_DATE);
+        }
+
+    }
+
+    private static class LocalTimeSerializer implements ClassSpecificSerializer<LocalTime> {
+
+        @Override
+        public Class<LocalTime> getClazz() {
+            return LocalTime.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, LocalTime obj, OutputStream out) throws SofofException {
+            try {
+                out.write(new JSONObject().put("class", LocalTime.class.getName()).put("time", obj.format(DateTimeFormatter.ISO_TIME)).toString().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public LocalTime deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            int i;
+            try {
+                while ((i = in.read()) != -1) {
+                    bytes.write(i);
+                }
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+            JSONObject obj = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+            return LocalTime.parse(obj.getString("time"), DateTimeFormatter.ISO_TIME);
+        }
+
+    }
+
+    private static class LocalDateTimeSerializer implements ClassSpecificSerializer<LocalDateTime> {
+
+        @Override
+        public Class<LocalDateTime> getClazz() {
+            return LocalDateTime.class;
+        }
+
+        @Override
+        public void serialize(Serializer serializer, LocalDateTime obj, OutputStream out) throws SofofException {
+            try {
+                out.write(new JSONObject().put("class", LocalDateTime.class.getName()).put("dateTime", obj.format(DateTimeFormatter.ISO_DATE_TIME)).toString().getBytes(StandardCharsets.UTF_8));
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+        }
+
+        @Override
+        public LocalDateTime deserialize(Serializer serializers, Class clazz, InputStream in) throws SofofException {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            int i;
+            try {
+                while ((i = in.read()) != -1) {
+                    bytes.write(i);
+                }
+            } catch (IOException ex) {
+                throw new SofofException(ex);
+            }
+            JSONObject obj = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+            return LocalDateTime.parse(obj.getString("dateTime"), DateTimeFormatter.ISO_DATE_TIME);
         }
 
     }
