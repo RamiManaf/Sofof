@@ -19,7 +19,6 @@ import org.sofof.SessionManager;
  * {@code <servlet>
  *         <servlet-name>Sofof Server</servlet-name>
  *         <servlet-class>org.sofof.servlet.SofofServlet</servlet-class>
- *         <load-on-startup>0</load-on-startup>
  *         <init-param>
  *             <param-name>path</param-name>
  *             <param-value>db</param-value>
@@ -40,18 +39,18 @@ import org.sofof.SessionManager;
  *             <param-name>configureSession</param-name>
  *             <param-value>false</param-value>
  *         </init-param>
+ *         <load-on-startup>0</load-on-startup>
  *</servlet>}
  * </pre></blockquote>
- * Configure server execute the configure method on the server object and configure session execute configure method on
- * {@link SessionManager}
- * 
+ * Configure server execute the configure method on the server object and
+ * configure session execute configure method on {@link SessionManager}
+ *
  * @author Rami Manaf Abdullah
  */
 public class SofofServlet extends HttpServlet {
 
     private static Server server;
 
-    
     @Override
     public void init(ServletConfig config) throws ServletException {
         if (config.getInitParameter("path") != null) {
